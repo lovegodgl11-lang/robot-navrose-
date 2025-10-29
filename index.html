@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en" class=""><head><script>window.livecodes = window.livecodes || {};</script><title>Automation </title><meta name="title" content="Automation "><meta name="description" content="Navrose robot style "><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="stylesheet" href="./style.css"><script src="https://cdn.jsdelivr.net/npm/es-module-shims@1.10.0/dist/es-module-shims.js" async=""></script><script type="importmap">{
+  "imports": {}
+}</script></head><body>
+
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automation Control - Navrose OMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Orbitron:wght@400;700&display=swap');
+        
+        :root {
+            --bg-dark: #0d1117;
+            --bg-panel: #161b22;
+            --border-color: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-glow: #238636;
+            --accent-action: #58a6ff;
+            --accent-danger: #f85149;
+        }
+
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+        }
+
+        .header-font {
+            font-family: 'Orbitron', sans-serif;
+            text-shadow: 0 0 5px var(--accent-glow);
+        }
+        
+        .panel {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(35, 134, 54, 0.2);
+        }
+
+        .log-screen {
+            background-color: #010409;
+            height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 0.8rem;
+        }
+        
+        .log-entry {
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+        }
+
+        .log-entry::before {
+            content: '>';
+            margin-right: 8px;
+            color: var(--accent-glow);
+        }
+        
+        .log-entry.user-command::before {
+            content: '$';
+            color: var(--accent-action);
+        }
+
+        .log-entry.error::before {
+            color: var(--accent-danger);
+        }
+
+        .control-btn {
+            background-color: var(--accent-action);
+            color: var(--bg-dark);
+            font-weight: bold;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            border: 1px solid #80c4ff;
+        }
+
+        .control-btn:hover {
+            box-shadow: 0 0 10px var(--accent-action);
+        }
+
+        .control-btn.active {
+            background-color: var(--accent-glow);
+            border-color: #35a249;
+        }
+        
+        .control-btn.stop {
+            background-color: var(--accent-danger);
+            border-color: #ff756f;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--text-secondary);
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-indicator.active {
+            background-color: var(--accent-glow);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 var(--accent-glow); }
+            70% { box-shadow: 0 0 0 7px rgba(35, 134, 54, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(35, 134, 54, 0); }
+        }
+    </style>
+
+
+
+    <header class="text-center mb-8">
+        <h1 class="text-3xl sm:text-4xl header-font text-green-400">Navrose OMS - AutoBot Interface</h1>
+        <p class="text-sm text-gray-500 mt-2">Automated Operations Controller</p>
+         <a href="index.html" class="mt-4 inline-block text-sm font-semibold text-indigo-400 hover:text-indigo-300 transition-colors">← Back to Main App</a>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        
+        <!-- Voice Assistant -->
+        <div class="panel p-4 flex flex-col lg:col-span-3">
+            <h2 class="font-bold text-lg mb-2 flex items-center"><span id="voice-status-indicator" class="status-indicator"></span>Voice Assistant Manager</h2>
+            <p id="voice-status-text" class="text-xs text-gray-400 mb-4">Start the assistant to enable hands-free order entry and management.</p>
+            <div class="log-screen mb-4" id="log-voice-assistant"></div>
+            <div class="mt-auto flex gap-2">
+                <button class="control-btn" id="btn-voice-assistant">Start Listening</button>
+            </div>
+        </div>
+
+        <!-- Auto-Create Suit Orders -->
+        <div class="panel p-4 flex flex-col">
+            <h2 class="font-bold text-lg mb-2 flex items-center"><span class="status-indicator" id="status-create-suit"></span>Auto-Generate Suit Orders</h2>
+            <p class="text-xs text-gray-400 mb-4">Generates new random stitching orders every few seconds.</p>
+            <div class="log-screen mb-4" id="log-create-suit"></div>
+            <div class="mt-auto flex gap-2">
+                <button class="control-btn" data-task="create-suit">Start</button>
+                <button class="control-btn stop" data-task="create-suit">Stop</button>
+            </div>
+        </div>
+
+        <!-- Auto-Create Alteration Orders -->
+        <div class="panel p-4 flex flex-col">
+            <h2 class="font-bold text-lg mb-2 flex items-center"><span class="status-indicator" id="status-create-alt"></span>Auto-Generate Alterations</h2>
+            <p class="text-xs text-gray-400 mb-4">Generates new random alteration orders.</p>
+            <div class="log-screen mb-4" id="log-create-alt"></div>
+            <div class="mt-auto flex gap-2">
+                <button class="control-btn" data-task="create-alt">Start</button>
+                <button class="control-btn stop" data-task="create-alt">Stop</button>
+            </div>
+        </div>
+
+        <!-- Auto-Process Pipeline -->
+        <div class="panel p-4 flex flex-col">
+            <h2 class="font-bold text-lg mb-2 flex items-center"><span class="status-indicator" id="status-process-pipe"></span>Automated Order Workflow</h2>
+            <p class="text-xs text-gray-400 mb-4">Moves orders from 'New' -&gt; 'In Progress' -&gt; 'Ready'.</p>
+            <div class="log-screen mb-4" id="log-process-pipe"></div>
+            <div class="mt-auto flex gap-2">
+                <button class="control-btn" data-task="process-pipe">Start</button>
+                <button class="control-btn stop" data-task="process-pipe">Stop</button>
+            </div>
+        </div>
+        
+        <!-- Auto-Receive Payments -->
+        <div class="panel p-4 flex flex-col">
+            <h2 class="font-bold text-lg mb-2 flex items-center"><span class="status-indicator" id="status-receive-pay"></span>Automated Payment Collector</h2>
+            <p class="text-xs text-gray-400 mb-4">Finds orders with a balance and simulates receiving payments.</p>
+            <div class="log-screen mb-4" id="log-receive-pay"></div>
+            <div class="mt-auto flex gap-2">
+                <button class="control-btn" data-task="receive-pay">Start</button>
+                <button class="control-btn stop" data-task="receive-pay">Stop</button>
+            </div>
+        </div>
+        
+        <!-- Auto-Complete Orders -->
+        <div class="panel p-4 flex flex-col">
+            <h2 class="font-bold text-lg mb-2 flex items-center"><span class="status-indicator" id="status-complete-order"></span>Automated Order Completion</h2>
+            <p class="text-xs text-gray-400 mb-4">Marks fully paid, 'Ready' orders as 'Completed'.</p>
+            <div class="log-screen mb-4" id="log-complete-order"></div>
+            <div class="mt-auto flex gap-2">
+                <button class="control-btn" data-task="complete-order">Start</button>
+                <button class="control-btn stop" data-task="complete-order">Stop</button>
+            </div>
+        </div>
+
+    </div>
+
+<script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyC0_DQIiyaVQllFH4pxH1Dm3r2kFXXoOgc",
+      authDomain: "navrosetailorapp.firebaseapp.com",
+      databaseURL: "https://navrosetailorapp-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "navrosetailorapp",
+      storageBucket: "navrosetailorapp.firebasestorage.app",
+      messagingSenderId: "574369461681",
+      appId: "1:574369461681:web:dbe9d417706ab0b5643990"
+    };
+    
+    // --- Mock Data for Auto-Generation ---
+    const mockCustomers = [
+        { name: "Amit Kumar", mobile: "9876543210" }, { name: "Sunita Sharma", mobile: "9871234567" },
+        { name: "Rajesh Singh", mobile: "9988776655" }, { name: "Priya Patel", mobile: "9123456789" },
+        { name: "Vikram Rathore", mobile: "9810987654" }, { name: "Anjali Mehta", mobile: "9821345678" }
+    ];
+    const mockSuitItems = [ "Kurta-Pajama", "3-Piece Suit", "Sherwani", "Jodhpuri Suit", "Pathani Suit", "Designer Blouse" ];
+    const mockAlterations = [ "Pant length adjustment", "Waist fitting", "Sleeve shortening", "Tapering shirt", "Saree fall pico", "Zipper replacement" ];
+
+    let db;
+    let allOrders = [];
+    const activeIntervals = {};
+
+    function initializeFirebase() {
+      try { 
+        firebase.initializeApp(firebaseConfig); 
+        db = firebase.database();
+        
+        db.ref('orders').on('value', (snapshot) => {
+            const ordersData = snapshot.val() || {};
+            allOrders = Object.keys(ordersData).map(key => ({ ...ordersData[key], firebaseKey: key }));
+        }, (error) => logMessage('voice-assistant', `Firebase read failed: ${error.message}`, 'error'));
+
+      } catch (e) { console.error("Firebase init failed:", e); }
+    }
+
+    function logMessage(task, message, type = 'info') {
+        const logScreen = document.getElementById(`log-${task}`);
+        if(logScreen) {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = message;
+            logScreen.appendChild(entry);
+            logScreen.scrollTop = logScreen.scrollHeight; // Auto-scroll
+        }
+    }
+
+    function getRandom(arr) {
+        return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function getNextOrderNumber(prefix) {
+        const relevantOrders = allOrders.filter(o => o.orderNumber && o.orderNumber.startsWith(prefix + '-'));
+        const lastNumber = relevantOrders.reduce((max, o) => {
+            const num = parseInt(o.orderNumber.split('-')[1], 10);
+            return Math.max(max, isNaN(num) ? 0 : num);
+        }, 0);
+        return `${prefix}-${String(lastNumber + 1).padStart(3, '0')}`;
+    }
+
+    // --- Automation Task Functions ---
+
+    function autoCreateSuitOrder() {
+        const customer = getRandom(mockCustomers);
+        const item = getRandom(mockSuitItems);
+        const orderNumber = getNextOrderNumber('S');
+        logMessage('create-suit', `Generating order ${orderNumber} for ${customer.name}...`);
+        
+        const pickupDate = new Date();
+        pickupDate.setDate(pickupDate.getDate() + 7 + Math.floor(Math.random() * 7));
+        
+        const newOrder = {
+            id: Date.now(),
+            orderNumber: orderNumber,
+            customerName: customer.name,
+            customerMobile: customer.mobile,
+            items: [{
+                item: item,
+                charges: Math.floor(Math.random() * 2000) + 500,
+                pickupDate: pickupDate.toISOString().split('T')[0],
+                notes: "Auto-generated order",
+            }],
+            type: 'stitching',
+            status: 'Pending',
+            pipelineStatus: 'new',
+            bookingDate: new Date().toISOString(),
+            lastUpdated: new Date().toISOString(),
+            payments: [], receivedPayment: 0,
+            paymentReceived: false
+        };
+        db.ref('orders').push(newOrder)
+            .then(() => logMessage('create-suit', `✓ Order ${orderNumber} saved successfully.`))
+            .catch(e => logMessage('create-suit', `✗ Error saving: ${e.message}`, 'error'));
+    }
+
+    function autoCreateAlteration() {
+        const customer = getRandom(mockCustomers);
+        const description = getRandom(mockAlterations);
+        const orderNumber = getNextOrderNumber('A');
+        logMessage('create-alt', `Generating alteration ${orderNumber} for ${customer.name}...`);
+        
+        const pickupDate = new Date();
+        pickupDate.setDate(pickupDate.getDate() + 2 + Math.floor(Math.random() * 3));
+
+        const newOrder = {
+            id: Date.now(),
+            orderNumber: orderNumber,
+            customerName: customer.name,
+            customerMobile: customer.mobile,
+            description: description,
+            charges: Math.floor(Math.random() * 300) + 50,
+            pickupDate: pickupDate.toISOString().split('T')[0],
+            type: 'alteration',
+            status: 'Pending',
+            pipelineStatus: 'new',
+            bookingDate: new Date().toISOString(),
+            lastUpdated: new Date().toISOString(),
+            payments: [], receivedPayment: 0,
+            paymentReceived: false
+        };
+        db.ref('orders').push(newOrder)
+            .then(() => logMessage('create-alt', `✓ Alteration ${orderNumber} saved.`))
+            .catch(e => logMessage('create-alt', `✗ Error saving: ${e.message}`, 'error'));
+    }
+    
+    async function autoProcessPipeline() {
+        const newOrders = allOrders.filter(o => o.pipelineStatus === 'new');
+        if (newOrders.length > 0) {
+            const orderToProcess = getRandom(newOrders);
+            logMessage('process-pipe', `Moving ${orderToProcess.orderNumber} to 'In Progress'...`);
+            await db.ref(`orders/${orderToProcess.firebaseKey}`).update({ pipelineStatus: 'in_progress' });
+            return;
+        }
+
+        const inProgressOrders = allOrders.filter(o => o.pipelineStatus === 'in_progress');
+        if (inProgressOrders.length > 0) {
+            const orderToProcess = getRandom(inProgressOrders);
+            logMessage('process-pipe', `Moving ${orderToProcess.orderNumber} to 'Ready for Pickup'...`);
+            await db.ref(`orders/${orderToProcess.firebaseKey}`).update({ pipelineStatus: 'ready_for_pickup' });
+            return;
+        }
+        
+        logMessage('process-pipe', 'No orders to process in pipeline.');
+    }
+    
+    async function autoReceivePayment() {
+        const unpaidOrders = allOrders.filter(o => {
+            const totalCharges = o.type === 'stitching' ? (o.items || []).reduce((s, i) => s + (i.charges || 0), 0) : (o.charges || 0);
+            return (totalCharges - (o.receivedPayment || 0)) > 0;
+        });
+
+        if (unpaidOrders.length > 0) {
+            const order = getRandom(unpaidOrders);
+            const totalCharges = order.type === 'stitching' ? (order.items || []).reduce((s, i) => s + (i.charges || 0), 0) : (o.charges || 0);
+            const balance = totalCharges - (order.receivedPayment || 0);
+            const paymentAmount = Math.min(balance, Math.floor(Math.random() * balance) + 1);
+            
+            logMessage('receive-pay', `Receiving ₹${paymentAmount.toFixed(2)} for ${order.orderNumber}...`);
+            
+            const newPayment = { id: Date.now(), amount: paymentAmount, date: new Date().toISOString(), mode: 'Cash' };
+            const updatedPayments = [...(order.payments || []), newPayment];
+            const newReceivedPayment = updatedPayments.reduce((sum, p) => sum + p.amount, 0);
+
+            await db.ref(`orders/${order.firebaseKey}`).update({
+                payments: updatedPayments,
+                receivedPayment: newReceivedPayment,
+                paymentReceived: newReceivedPayment >= totalCharges
+            });
+        } else {
+            logMessage('receive-pay', 'No orders with outstanding balance.');
+        }
+    }
+
+    async function autoCompleteOrder() {
+        const readyAndPaidOrders = allOrders.filter(o => o.pipelineStatus === 'ready_for_pickup' && o.paymentReceived);
+        if (readyAndPaidOrders.length > 0) {
+            const order = getRandom(readyAndPaidOrders);
+            logMessage('complete-order', `Completing order ${order.orderNumber}...`);
+            await db.ref(`orders/${order.firebaseKey}`).update({
+                pipelineStatus: 'completed',
+                status: 'Completed',
+                completedDate: new Date().toISOString()
+            });
+        } else {
+            logMessage('complete-order', 'No fully paid, ready orders to complete.');
+        }
+    }
+
+    // --- Voice Assistant ---
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+    let isListening = false;
+    let currentVoiceOrder = null;
+    let confirmationPending = null;
+    let paymentContext = null;
+
+    function speak(text) {
+        logMessage('voice-assistant', `ASSISTANT: ${text}`);
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-IN';
+        utterance.rate = 0.9;
+        utterance.pitch = 1.1;
+        window.speechSynthesis.speak(utterance);
+    }
+    
+    function processCommand(command) {
+        command = command.toLowerCase().trim();
+        logMessage('voice-assistant', `USER: ${command}`, 'user-command');
+        
+        if (confirmationPending) {
+            if (command.includes('yes')) {
+                executeConfirmation(true);
+            } else if (command.includes('no')) {
+                executeConfirmation(false);
+            } else {
+                speak("Please say yes or no to confirm.");
+            }
+            return;
+        }
+
+        if (command.includes('open alteration')) {
+            currentVoiceOrder = { type: 'alteration', items: [], description: '' };
+            speak("New alteration form initiated. Please provide the customer's name and mobile number.");
+        } else if (currentVoiceOrder && command.includes('customer name is')) {
+            currentVoiceOrder.customerName = command.split('customer name is')[1].trim();
+            speak(`Customer name set to ${currentVoiceOrder.customerName}. What is their mobile number?`);
+        } else if (currentVoiceOrder && command.includes('mobile is')) {
+            currentVoiceOrder.customerMobile = command.match(/\d/g).join('');
+            speak(`Mobile number set to ${currentVoiceOrder.customerMobile}. Please state the alteration details.`);
+        } else if (currentVoiceOrder && (command.includes('details are') || command.includes('alteration is'))) {
+            const details = command.split(/details are|alteration is/)[1].trim();
+            currentVoiceOrder.description = (currentVoiceOrder.description ? currentVoiceOrder.description + ', ' : '') + details;
+            speak(`Added details: ${details}. Anymore details or state the amount?`);
+        } else if (currentVoiceOrder && command.includes('amount is')) {
+            const amount = parseFloat(command.match(/\d+/)[0]);
+            currentVoiceOrder.charges = amount;
+            speak(`Amount set to ${amount} rupees. Ready to save?`);
+        } else if (command.includes('save order')) {
+            if (!currentVoiceOrder || !currentVoiceOrder.customerName || !currentVoiceOrder.customerMobile) {
+                speak("I can't save. I need at least a customer name and mobile number.");
+                return;
+            }
+            confirmationPending = { type: 'save_order', data: currentVoiceOrder };
+            speak("Do you want to save this order?");
+        } else if (command.includes('add payment for')) {
+            const customerName = command.split('add payment for')[1].trim();
+            const customerOrders = allOrders.filter(o => o.customerName.toLowerCase() === customerName).sort((a, b) => new Date(b.bookingDate) - new Date(a.bookingDate));
+            if (customerOrders.length > 0) {
+                paymentContext = { order: customerOrders[0] };
+                speak(`Found latest order ${paymentContext.order.orderNumber} for ${customerName}. How much to receive?`);
+            } else {
+                speak(`I could not find any orders for ${customerName}.`);
+            }
+        } else if (paymentContext && command.includes('receive')) {
+            const amount = parseFloat(command.match(/\d+/)[0]);
+            paymentContext.amount = amount;
+            paymentContext.mode = command.includes('cash') ? 'Cash' : (command.includes('upi') ? 'UPI' : 'Other');
+            speak(`Received ${amount} rupees via ${paymentContext.mode}. Ready to save this payment?`);
+        } else if (command.includes('save payment')) {
+            if (!paymentContext || !paymentContext.amount) {
+                speak("I don't have payment details to save. Please specify the amount first.");
+                return;
+            }
+            confirmationPending = { type: 'save_payment', data: paymentContext };
+            speak(`Confirm saving a payment of ${paymentContext.amount} rupees for order ${paymentContext.order.orderNumber}?`);
+        } else {
+            speak("Sorry, I didn't understand that command.");
+        }
+    }
+
+    function executeConfirmation(isConfirmed) {
+        if (!confirmationPending) return;
+        
+        if (isConfirmed) {
+            if (confirmationPending.type === 'save_order') {
+                saveVoiceOrder(confirmationPending.data);
+            } else if (confirmationPending.type === 'save_payment') {
+                saveVoicePayment(confirmationPending.data);
+            }
+        } else {
+            speak("Action cancelled.");
+        }
+        confirmationPending = null;
+    }
+
+    function saveVoiceOrder(orderData) {
+        const pickupDate = new Date();
+        pickupDate.setDate(pickupDate.getDate() + 3);
+
+        const newOrder = {
+            ...orderData,
+            id: Date.now(),
+            orderNumber: getNextOrderNumber('A'),
+            pickupDate: pickupDate.toISOString().split('T')[0],
+            status: 'Pending',
+            pipelineStatus: 'new',
+            bookingDate: new Date().toISOString(),
+            lastUpdated: new Date().toISOString(),
+            payments: [], receivedPayment: 0,
+            paymentReceived: false
+        };
+        db.ref('orders').push(newOrder)
+            .then(() => {
+                speak(`Order saved successfully. The order number is ${newOrder.orderNumber}.`);
+                currentVoiceOrder = null;
+            })
+            .catch(e => speak(`Error: could not save order. ${e.message}`));
+    }
+
+    function saveVoicePayment(paymentData) {
+        const { order, amount, mode } = paymentData;
+        const newPayment = { id: Date.now(), amount, date: new Date().toISOString(), mode };
+        const updatedPayments = [...(order.payments || []), newPayment];
+        const newReceivedPayment = updatedPayments.reduce((sum, p) => sum + p.amount, 0);
+        
+        const totalCharges = order.type === 'stitching' ? (order.items || []).reduce((s, i) => s + (i.charges || 0), 0) : (order.charges || 0);
+
+        db.ref(`orders/${order.firebaseKey}`).update({
+            payments: updatedPayments,
+            receivedPayment: newReceivedPayment,
+            paymentReceived: newReceivedPayment >= totalCharges,
+            lastUpdated: new Date().toISOString()
+        }).then(() => {
+            speak("Payment saved successfully.");
+            paymentContext = null;
+        }).catch(e => speak(`Error: could not save payment. ${e.message}`));
+    }
+    
+    function toggleListening() {
+        if (isListening) {
+            recognition.stop();
+            isListening = false;
+        } else {
+            recognition.start();
+            isListening = true;
+        }
+    }
+
+    // --- Control Logic ---
+    const taskFunctions = {
+        'create-suit': autoCreateSuitOrder,
+        'create-alt': autoCreateAlteration,
+        'process-pipe': autoProcessPipeline,
+        'receive-pay': autoReceivePayment,
+        'complete-order': autoCompleteOrder,
+    };
+
+    function startTask(taskKey) {
+        if (activeIntervals[taskKey]) return; // Already running
+        
+        document.getElementById(`status-${taskKey.replace(/-/g, '')}`).classList.add('active');
+        logMessage(taskKey, 'Automation started...');
+
+        const delay = (taskKey.includes('create')) ? 5000 : 7000;
+        
+        taskFunctions[taskKey.replace(/-/g, '')](); // Run once immediately
+        activeIntervals[taskKey] = setInterval(taskFunctions[taskKey.replace(/-/g, '')], delay);
+    }
+    
+    function stopTask(taskKey) {
+        if (activeIntervals[taskKey]) {
+            clearInterval(activeIntervals[taskKey]);
+            delete activeIntervals[taskKey];
+            document.getElementById(`status-${taskKey.replace(/-/g, '')}`).classList.remove('active');
+            logMessage(taskKey, 'Automation stopped.');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initializeFirebase();
+
+        // Standard automation buttons
+        document.querySelectorAll('.control-btn').forEach(btn => {
+            if(btn.id === 'btn-voice-assistant') return;
+            btn.addEventListener('click', () => {
+                const task = btn.dataset.task;
+                if (btn.classList.contains('stop')) {
+                    stopTask(task);
+                } else {
+                    startTask(task);
+                }
+            });
+        });
+
+        // Voice Assistant Setup
+        if (!SpeechRecognition) {
+            logMessage('voice-assistant', "Speech Recognition API not supported in this browser.", 'error');
+            document.getElementById('btn-voice-assistant').disabled = true;
+            return;
+        }
+        
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.lang = 'en-IN';
+        recognition.interimResults = false;
+        
+        recognition.onstart = () => {
+            document.getElementById('voice-status-indicator').classList.add('active');
+            document.getElementById('voice-status-text').textContent = 'Listening...';
+        };
+
+        recognition.onend = () => {
+            document.getElementById('voice-status-indicator').classList.remove('active');
+            document.getElementById('voice-status-text').textContent = 'Assistant is idle. Say a command.';
+            if (isListening) { // If it's supposed to be listening, restart it
+                setTimeout(() => recognition.start(), 100);
+            }
+        };
+
+        recognition.onerror = (event) => {
+            logMessage('voice-assistant', `Speech Error: ${event.error}`, 'error');
+        };
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            processCommand(transcript);
+        };
+        
+        const voiceBtn = document.getElementById('btn-voice-assistant');
+        voiceBtn.addEventListener('click', () => {
+            if (isListening) {
+                isListening = false;
+                recognition.stop();
+                voiceBtn.textContent = 'Start Listening';
+                voiceBtn.classList.remove('stop');
+                speak("Voice assistant paused.");
+            } else {
+                isListening = true;
+                recognition.start();
+                voiceBtn.textContent = 'Stop Listening';
+                voiceBtn.classList.add('stop');
+                speak("Voice assistant activated. How can I help you?");
+            }
+        });
+
+    });
+
+</script>
+
+
+<script src="./script.js"></script></body></html>
