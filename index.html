@@ -1,10 +1,19 @@
 <!DOCTYPE html>
-<html lang="en" class=""><head><script>window.livecodes = window.livecodes || {};</script><title>Robot style </title><meta name="title" content="Robot style "><meta name="description" content="Update version "><meta charset="UTF-8">
+<html lang="en" class=""><head><script>window.livecodes = window.livecodes || {};</script><title>Update automatically </title><meta name="title" content="Update automatically "><meta name="description" content="Voice entry "><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="stylesheet" href="./style.css"><script src="https://cdn.jsdelivr.net/npm/es-module-shims@1.10.0/dist/es-module-shims.js" async=""></script><script type="importmap">{
   "imports": {}
 }</script></head><body>
 
 
+    <script>window.livecodes = window.livecodes || {};</script>
+    <title>Auto , manual command </title>
+    <meta name="title" content="Auto , manual command ">
+    <meta name="description" content="Automation ">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style id="__livecodes_styles__"></style>
+    <script src="https://cdn.jsdelivr.net/npm/es-module-shims@1.10.0/dist/es-module-shims.js" async=""></script>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Automated Order Entry - Navrose Stitching Point</title>
@@ -61,694 +70,538 @@
 
 
 
-    <div class="max-w-4xl mx-auto">
+    <div class="max-w-4xl mx-auto p-4">
         <div class="flex justify-between items-center mb-4">
             <h1 class="text-2xl font-bold text-gray-800">Automated Order Entry</h1>
             <a href="index.html" class="text-sm font-semibold text-indigo-600 hover:text-indigo-800">← Back to Main App</a>
         </div>
         
-        <!-- Manual Search UI -->
-        <div id="manual-search-ui" class="bg-white p-4 rounded-lg shadow-md mb-6">
-            <label for="manual-search-input" class="block text-sm font-medium text-gray-700 mb-2">Search Order</label>
-            <div class="flex items-center gap-2">
-                <input type="search" id="manual-search-input" placeholder="Enter Order ID or Customer Name..." class="form-input w-full">
-                <button type="button" id="manual-search-btn" class="btn-primary flex-shrink-0">Search</button>
+        <div id="initial-interaction-area" class="space-y-6">
+            <!-- Manual Search UI -->
+            <div id="manual-search-ui" class="bg-white p-4 rounded-lg shadow-md">
+                <label for="manual-search-input" class="block text-sm font-medium text-gray-700 mb-2">Search Order</label>
+                <div class="flex items-center gap-2">
+                    <input type="search" id="manual-search-input" placeholder="Enter Order ID or Customer Name..." class="form-input w-full">
+                    <button type="button" id="manual-search-btn" class="btn-primary flex-shrink-0">Search</button>
+                </div>
+            </div>
+
+            <!-- Voice Assistant UI -->
+            <div id="voice-assistant-ui" class="bg-white p-4 rounded-lg shadow-md">
+                <div class="flex items-center gap-4">
+                    <button id="mic-btn" class="w-14 h-14 bg-indigo-600 text-white rounded-full flex items-center justify-center flex-shrink-0" aria-label="Start Voice Assistant">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                    </button>
+                    <div class="w-full">
+                        <p id="assistant-status" class="text-sm font-semibold text-gray-700">माइक दबाएं और 'नया ऑर्डर' या 'ऑर्डर खोजो' बोलें।</p>
+                        <p id="transcript" class="text-xs text-gray-500 italic h-4"></p>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Voice Assistant UI -->
-        <div id="voice-assistant-ui" class="bg-white p-4 rounded-lg shadow-md mb-6">
-            <div class="flex items-center gap-4">
-                <button id="mic-btn" class="w-14 h-14 bg-indigo-600 text-white rounded-full flex items-center justify-center flex-shrink-0" aria-label="Start Voice Assistant">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
-                </button>
-                <div class="w-full">
-                    <p id="assistant-status" class="text-sm font-semibold text-gray-700">माइक दबाएं और 'नया ऑर्डर' या 'ऑर्डर खोजो' बोलें।</p>
-                    <p id="transcript" class="text-xs text-gray-500 italic h-4"></p>
-                </div>
-            </div>
+        <!-- Fallback message -->
+        <div id="mic-not-supported-message" class="hidden bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md my-6" role="alert">
+            <p class="font-bold">Voice Control Unavailable</p>
+            <p>Your browser does not support voice commands, or there was an error. Please use manual entry below.</p>
         </div>
 
         <!-- Main Form -->
-        <form id="order-form" class="bg-white p-6 rounded-lg shadow-md space-y-6">
+        <form id="order-form" class="bg-white p-6 rounded-lg shadow-md space-y-6 mt-6 hidden">
             <input type="hidden" id="editing-order-id">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="md:col-span-1">
-                    <label for="customer-name" class="block text-sm font-medium text-gray-700">Customer Name</label>
-                    <input type="text" id="customer-name" class="form-input mt-1" required="" list="customer-name-list">
-                    <datalist id="customer-name-list"></datalist>
+                <div>
+                    <label for="order-number" class="block text-sm font-medium text-gray-700">Order Number</label>
+                    <input type="text" id="order-number" class="form-input mt-1 bg-gray-100" readonly="">
                 </div>
-                <div class="md:col-span-1">
+                <div>
+                    <label for="customer-name" class="block text-sm font-medium text-gray-700">Customer Name</label>
+                    <input type="text" id="customer-name" class="form-input mt-1" required="">
+                </div>
+                <div>
                     <label for="customer-mobile" class="block text-sm font-medium text-gray-700">Mobile Number</label>
                     <input type="tel" id="customer-mobile" class="form-input mt-1" required="">
                 </div>
-                <div class="md:col-span-1">
+            </div>
+
+            <div class="border-t pt-4">
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">Items</h3>
+                <div id="items-container" class="space-y-3">
+                    <!-- Item rows will be added here -->
+                </div>
+                <button type="button" id="add-item-btn" class="mt-2 text-sm text-indigo-600 hover:underline font-semibold">+ Add Item</button>
+            </div>
+            
+            <div class="border-t pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div>
+                    <label for="pickup-date" class="block text-sm font-medium text-gray-700">Pickup Date</label>
+                    <input type="date" id="pickup-date" class="form-input mt-1" required="">
+                </div>
+                <div>
                     <label for="order-type" class="block text-sm font-medium text-gray-700">Order Type</label>
-                    <select id="order-type" class="form-select mt-1" required="">
-                        <option value="">-- Select Type --</option>
-                        <option value="stitching">New Suit</option>
-                        <option value="alteration">Alterations &amp; Repair</option>
+                    <select id="order-type" class="form-select mt-1">
+                        <option value="stitching">Stitching</option>
+                        <option value="alteration">Alteration</option>
                     </select>
                 </div>
             </div>
-            
-            <!-- New Suit Section -->
-            <div id="stitching-section" class="hidden space-y-4 border-t pt-4">
-                <h3 class="text-lg font-semibold">New Suit Details</h3>
-                <div id="stitching-items-container" class="space-y-2"></div>
-                <button type="button" id="add-stitching-item-btn" class="btn-secondary text-sm">+ Add Item</button>
-                <div class="text-right font-bold text-lg">Grand Total: <span id="stitching-total">₹0.00</span></div>
-            </div>
 
-            <!-- Alterations Section -->
-            <div id="alteration-section" class="hidden space-y-4 border-t pt-4">
-                <h3 class="text-lg font-semibold">Alteration &amp; Repair Details</h3>
-                <div id="alteration-items-container" class="space-y-2"></div>
-                <button type="button" id="add-alteration-item-btn" class="btn-secondary text-sm">+ Add Item</button>
-                <div class="text-right font-bold text-lg">Grand Total: <span id="alteration-total">₹0.00</span></div>
-            </div>
-            
-            <div class="border-t pt-4">
-                <label for="pickup-date" class="block text-sm font-medium text-gray-700">Pickup Date</label>
-                <input type="date" id="pickup-date" class="form-input mt-1 max-w-xs" required="">
-            </div>
-
-            <div class="border-t pt-4">
-                <label for="note" class="block text-sm font-medium text-gray-700">General Notes</label>
-                <textarea id="note" rows="3" class="form-textarea mt-1"></textarea>
-            </div>
-            
-            <div class="flex justify-end gap-4 border-t pt-4">
-                <button type="button" id="clear-form-btn" class="btn-secondary">Clear Form</button>
-                <button type="submit" class="btn-primary">Save Order</button>
+            <div class="flex justify-between items-center border-t pt-4">
+                <div class="text-lg font-bold">Total: <span id="total-charges">₹0.00</span></div>
+                <div class="flex gap-2">
+                    <button type="button" id="clear-form-btn" class="btn-secondary">Clear</button>
+                    <button type="submit" class="btn-primary">Save Order</button>
+                </div>
             </div>
         </form>
     </div>
 
-    <div class="toast" id="toast"><span id="toast-message"></span></div>
-
-<script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyC0_DQIiyaVQllFH4pxH1Dm3r2kFXXoOgc",
-      authDomain: "navrosetailorapp.firebaseapp.com",
-      databaseURL: "https://navrosetailorapp-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "navrosetailorapp",
-      storageBucket: "navrosetailorapp.firebasestorage.app",
-      messagingSenderId: "574369461681",
-      appId: "1:574369461681:web:dbe9d417706ab0b5643990"
-    };
-
-    // --- Price Logic ---
-    const STITCHING_PRICES = {
-        "salwar suit without inner": 350,
-        "pant style suit without inner": 400,
-        "salwar suit with half inner": 700,
-        "salwar suit full inner": 1100,
-        "pant suit with half inner": 800,
-        "pant suit full inner": 1200
-    };
-
-    const ALTERATION_PRICES = {
-        "pant l": 50, "pajama length": 50, "pant length": 50,
-        "pant fitting w": 50, "pant waist": 50,
-        "shirt fitting": 50,
-        "rafu": 30,
-        "pico turban": 50,
-        "pico frock": 100,
-        "dupatta pico": 20,
-        "dupatta lace": 100,
-        "full suit fitting": 150,
-        "full dress fitting": 250,
-        "normal fitting": 50,
-        "repair normal": 20,
-        "hamming": 50,
-    };
-
-    // --- DOM Elements ---
-    const orderTypeSelect = document.getElementById('order-type');
-    const stitchingSection = document.getElementById('stitching-section');
-    const alterationSection = document.getElementById('alteration-section');
-    const addStitchingItemBtn = document.getElementById('add-stitching-item-btn');
-    const addAlterationItemBtn = document.getElementById('add-alteration-item-btn');
-    const orderForm = document.getElementById('order-form');
-    const clearFormBtn = document.getElementById('clear-form-btn');
-    const customerNameInput = document.getElementById('customer-name');
-    const customerMobileInput = document.getElementById('customer-mobile');
-    const noteInput = document.getElementById('note');
-    const editingOrderIdInput = document.getElementById('editing-order-id');
-
-    // --- Firebase & State ---
-    let db;
-    let allOrders = [];
-    let allCustomers = [];
-    let tempPaymentInfo = {};
-
-    // --- UI Logic ---
-    function showToast(message, ms = 3000) {
-        const t = document.getElementById('toast');
-        const m = document.getElementById('toast-message');
-        m.textContent = message;
-        t.classList.add('show');
-        clearTimeout(t._hideTimeout);
-        t._hideTimeout = setTimeout(() => { t.classList.remove('show'); }, ms);
-    }
+    <div id="toast" class="toast"></div>
     
-    function createItemRow(type, containerId) {
-        const container = document.getElementById(containerId);
-        const index = container.children.length;
-        const prices = type === 'stitching' ? STITCHING_PRICES : ALTERATION_PRICES;
-        const options = Object.keys(prices).map(p => `<option value="${p}">${p.charAt(0).toUpperCase() + p.slice(1)}</option>`).join('');
-
-        const row = document.createElement('div');
-        row.className = 'item-row grid grid-cols-12 gap-2 items-center';
-        row.innerHTML = `
-            <span class="col-span-1 text-sm text-center">${index + 1}.</span>
-            <select class="description-select col-span-5 form-select" required>
-                <option value="">-- Select Description --</option>
-                ${options}
-            </select>
-            <input type="text" class="note-input col-span-3 form-input" placeholder="Item Note">
-            <input type="number" class="amount-input col-span-2 form-input" placeholder="Amount" step="0.01" min="0" required>
-            <button type="button" class="delete-item-btn col-span-1 btn-secondary text-red-600">×</button>
-        `;
-
-        const descSelect = row.querySelector('.description-select');
-        const amountInput = row.querySelector('.amount-input');
-        
-        descSelect.addEventListener('change', () => {
-            amountInput.value = prices[descSelect.value] || 0;
-            updateTotal(type);
-        });
-        amountInput.addEventListener('input', () => updateTotal(type));
-
-        row.querySelector('.delete-item-btn').addEventListener('click', () => {
-            row.remove();
-            updateTotal(type);
-            container.querySelectorAll('.item-row').forEach((r, i) => {
-                r.querySelector('span').textContent = `${i + 1}.`;
-            });
-        });
-
-        container.appendChild(row);
-        return row;
-    }
-
-    function updateTotal(type) {
-        if (!type) return;
-        const containerId = `${type}-items-container`;
-        let total = 0;
-        document.querySelectorAll(`#${containerId} .amount-input`).forEach(input => {
-            total += parseFloat(input.value) || 0;
-        });
-        document.getElementById(`${type}-total`).textContent = `₹${total.toFixed(2)}`;
-    }
-
-    function clearForm() {
-        orderForm.reset();
-        editingOrderIdInput.value = '';
-        stitchingSection.classList.add('hidden');
-        alterationSection.classList.add('hidden');
-        document.getElementById('stitching-items-container').innerHTML = '';
-        document.getElementById('alteration-items-container').innerHTML = '';
-        updateTotal('stitching');
-        updateTotal('alteration');
-        highlightField(null);
-        assistantState = 'idle';
-    }
-    
-    // --- Data Logic ---
-    function initializeFirebase() {
-      try {
-        firebase.initializeApp(firebaseConfig);
-        db = firebase.database();
-        db.ref('orders').on('value', (snapshot) => {
-            const data = snapshot.val() || {};
-            allOrders = Object.entries(data).map(([key, value]) => ({
-                ...value,
-                firebaseKey: key
-            }));
-        });
-        db.ref('customers').on('value', (snapshot) => {
-            const data = snapshot.val() || {};
-            allCustomers = Object.values(data);
-            populateCustomerDatalist();
-        });
-        console.log("Firebase initialized.");
-      } catch (e) {
-        console.error("Firebase initialization failed:", e);
-        showToast("Firebase connection failed.");
-      }
-    }
-    
-    function populateCustomerDatalist() {
-        const datalist = document.getElementById('customer-name-list');
-        if (datalist) {
-            datalist.innerHTML = allCustomers.map(c => `<option value="${c.name}">`).join('');
-        }
-    }
-
-    function getNextOrderNumber(orderType) {
-        const prefix = orderType === 'stitching' ? 'S' : 'A';
-        const relevantOrders = allOrders.filter(o => o.orderNumber && o.orderNumber.startsWith(prefix + '-'));
-        const lastNumber = relevantOrders.reduce((max, o) => {
-            const num = parseInt(o.orderNumber.split('-')[1], 10);
-            return Math.max(max, isNaN(num) ? 0 : num);
-        }, 0);
-        return `${prefix}-${String(lastNumber + 1).padStart(3, '0')}`;
-    }
-
-    async function saveOrder(e) {
-        if (e) e.preventDefault();
-        if (!db) { showToast("Database not connected."); return; }
-        
-        const existingOrderId = editingOrderIdInput.value;
-        const orderType = orderTypeSelect.value;
-        if (!orderType) { showToast("Please select an order type."); return; }
-        
-        const itemsContainerId = `${orderType}-items-container`;
-        const itemRows = document.querySelectorAll(`#${itemsContainerId} .item-row`);
-        if (itemRows.length === 0) { showToast("Please add at least one item."); return; }
-        
-        const customerName = document.getElementById('customer-name').value.trim();
-        const customerMobile = document.getElementById('customer-mobile').value.trim();
-
-        const items = Array.from(itemRows).map(row => {
-            return {
-                item: row.querySelector('.description-select').value,
-                charges: parseFloat(row.querySelector('.amount-input').value) || 0,
-                note: row.querySelector('.note-input').value.trim(),
-                pickupDate: document.getElementById('pickup-date').value
-            };
-        });
-
-        const totalCharges = items.reduce((sum, item) => sum + item.charges, 0);
-
-        const orderData = {
-            customerName,
-            customerMobile,
-            type: orderType,
-            lastUpdated: new Date().toISOString(),
-            items: orderType === 'stitching' ? items : [],
-            description: orderType === 'alteration' ? items.map(i => i.item).join(', ') : '',
-            charges: orderType === 'alteration' ? totalCharges : 0,
-            pickupDate: document.getElementById('pickup-date').value,
-            note: document.getElementById('note').value.trim(),
+    <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyC0_DQIiyaVQllFH4pxH1Dm3r2kFXXoOgc",
+          authDomain: "navrosetailorapp.firebaseapp.com",
+          databaseURL: "https://navrosetailorapp-default-rtdb.asia-southeast1.firebasedatabase.app",
+          projectId: "navrosetailorapp",
+          storageBucket: "navrosetailorapp.firebasestorage.app",
+          messagingSenderId: "574369461681",
+          appId: "1:574369461681:web:dbe9d417706ab0b5643990"
         };
+        
+        let db;
+        let allOrders = [];
 
-        if (orderType === 'stitching') {
-            delete orderData.charges;
-            delete orderData.pickupDate; 
+        // Voice Assistant State
+        let recognition;
+        let isListening = false;
+        let conversationState = 'IDLE'; // IDLE, AWAIT_CUSTOMER_NAME, AWAIT_MOBILE, AWAIT_ORDER_TYPE, AWAIT_ITEM_COUNT, AWAIT_ITEM_NAME, AWAIT_ITEM_CHARGES, AWAIT_PICKUP_DATE, AWAIT_SAVE_CONFIRMATION
+        let currentItemIndex = 0;
+        let totalItemsToAdd = 0;
+        let lastSearchResults = [];
+
+        // DOM Elements
+        const orderForm = document.getElementById('order-form');
+        const voiceAssistantUI = document.getElementById('voice-assistant-ui');
+        const micNotSupportedMessage = document.getElementById('mic-not-supported-message');
+        const micBtn = document.getElementById('mic-btn');
+        const assistantStatusEl = document.getElementById('assistant-status');
+        const transcriptEl = document.getElementById('transcript');
+        const manualSearchInput = document.getElementById('manual-search-input');
+        const manualSearchBtn = document.getElementById('manual-search-btn');
+
+        function showToast(message, ms = 3000) {
+            const t = document.getElementById('toast');
+            t.textContent = message;
+            t.classList.add('show');
+            clearTimeout(t.hideTimeout);
+            t.hideTimeout = setTimeout(() => t.classList.remove('show'), ms);
         }
 
-        if (existingOrderId) {
-            // Update existing order
-            const orderToUpdate = allOrders.find(o => o.id.toString() === existingOrderId);
-            if (!orderToUpdate) {
-                showToast("Error finding order to update.");
+        function speak(text, onEndCallback = () => {}) {
+            if (!('speechSynthesis' in window)) {
+                console.warn("Speech synthesis not supported.");
+                onEndCallback();
                 return;
             }
-            try {
-                // Preserve existing fields that are not in the form
-                const finalUpdateData = {
-                    ...orderToUpdate,
-                    ...orderData
-                };
-                await db.ref(`orders/${orderToUpdate.firebaseKey}`).update(finalUpdateData);
-                const confirmationMessage = `Order #${orderToUpdate.orderNumber} updated successfully!`;
-                showToast(confirmationMessage);
-                speak(`ऑर्डर नंबर ${orderToUpdate.orderNumber.replace(/-/g, ' ')} अपडेट हो गया है।`);
-                clearForm();
-            } catch (error) {
-                console.error("Error updating order:", error);
-                showToast("Failed to update order.");
-            }
-        } else {
-            // Create new order
-            let customer = allCustomers.find(c => c.mobile === customerMobile);
-            if (!customer) {
-                try {
-                    await db.ref('customers').push({ id: Date.now(), name: customerName, mobile: customerMobile });
-                } catch (error) { console.error("Error saving new customer:", error); }
-            }
-
-            const newOrder = {
-                ...orderData,
-                id: Date.now(),
-                orderNumber: getNextOrderNumber(orderType),
-                status: 'Pending',
-                pipelineStatus: 'new',
-                bookingDate: new Date().toISOString(),
-                payments: [],
-                receivedPayment: 0,
-                paymentReceived: false,
-            };
-            try {
-                await db.ref('orders').push(newOrder);
-                const confirmationMessage = `Order #${newOrder.orderNumber} saved successfully!`;
-                showToast(confirmationMessage);
-                speak(`आपका ऑर्डर सेव हो गया है। ऑर्डर नंबर है ${newOrder.orderNumber.replace(/-/g, ' ')}`);
-                clearForm();
-            } catch (error) {
-                console.error("Error saving order:", error);
-                showToast("Failed to save order.");
-            }
+            speechSynthesis.cancel(); // Prevent overlapping speech
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'hi-IN'; // Prioritize Hindi voice
+            utterance.rate = 0.9;
+            utterance.onend = onEndCallback;
+            speechSynthesis.speak(utterance);
         }
-    }
-
-    function searchAndLoadOrder(query, isManualSearch = false) {
-        const lowerQuery = query.toLowerCase();
-        const results = allOrders.filter(o => 
-            (o.customerName && o.customerName.toLowerCase().includes(lowerQuery)) ||
-            (o.orderNumber && o.orderNumber.toLowerCase().includes(lowerQuery))
-        ).sort((a,b) => new Date(b.bookingDate) - new Date(a.bookingDate));
-
-        if (results.length === 0) {
-            if (isManualSearch) {
-                showToast(`No orders found for "${query}".`);
-            } else {
-                speak(`"${query}" के लिए कोई ऑर्डर नहीं मिला।`);
-            }
-            assistantState = 'idle';
-        } else {
-            loadOrderIntoForm(results[0]);
-            assistantState = 'edit_order'; // Set state for both manual and voice search
-            if (isManualSearch) {
-                showToast(`Loaded latest order for "${query}". You can now edit and save.`);
-            } else {
-                speak(`${results.length} ऑर्डर मिले हैं। सबसे नया वाला लोड कर रहा हूँ।`, () => {
-                    speak("ऑर्डर लोड हो गया है। आप बदलाव करके 'सेव करें' या 'पेमेंट रिसीव करो' बोल सकते हैं।", () => recognition.start());
-                });
-            }
-        }
-    }
-
-    function loadOrderIntoForm(order) {
-        clearForm();
-        editingOrderIdInput.value = order.id;
-        customerNameInput.value = order.customerName || '';
-        customerMobileInput.value = order.customerMobile || '';
-        orderTypeSelect.value = order.type;
-        orderTypeSelect.dispatchEvent(new Event('change'));
-
-        const containerId = `${order.type}-items-container`;
         
-        if (order.type === 'stitching' && order.items) {
-             order.items.forEach(item => {
-                const row = createItemRow('stitching', containerId);
-                row.querySelector('.description-select').value = item.item || '';
-                row.querySelector('.note-input').value = item.note || '';
-                row.querySelector('.amount-input').value = item.charges || 0;
-            });
-        } else if (order.type === 'alteration') {
-            const alterationItems = order.description.split(', ').filter(Boolean);
-            alterationItems.forEach((desc, index) => {
-                const row = createItemRow('alteration', containerId);
-                const matchingKey = Object.keys(ALTERATION_PRICES).find(p => desc.trim().toLowerCase() === p);
-                if(matchingKey){
-                    row.querySelector('.description-select').value = matchingKey;
-                    // Pro-rate charges if multiple items exist, otherwise use total
-                    const chargePerItem = alterationItems.length > 1 ? (parseFloat(order.charges) / alterationItems.length) : parseFloat(order.charges);
-                    row.querySelector('.amount-input').value = chargePerItem || 0;
+        function highlightField(elementId) {
+            document.querySelectorAll('.highlight-field').forEach(el => el.classList.remove('highlight-field'));
+            if (elementId) {
+                const el = document.getElementById(elementId);
+                if (el) {
+                    el.classList.add('highlight-field');
+                    el.focus();
+                }
+            }
+        }
+        
+        function getNextOrderNumber() {
+            const prefix = 'AUTO';
+            const relevantOrders = allOrders.filter(o => o.orderNumber && o.orderNumber.startsWith(prefix + '-'));
+            const lastNumber = relevantOrders.reduce((max, o) => {
+                const num = parseInt(o.orderNumber.split('-')[1], 10);
+                return Math.max(max, isNaN(num) ? 0 : num);
+            }, 0);
+            return `${prefix}-${String(lastNumber + 1).padStart(3, '0')}`;
+        }
+        
+        function initializeFirebase() {
+            try {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.database();
+                db.ref('orders').on('value', (snapshot) => {
+                    const data = snapshot.val() || {};
+                    allOrders = Object.values(data);
+                });
+            } catch (e) {
+                console.error("Firebase initialization failed:", e);
+                showToast("Connection to database failed.", 5000);
+            }
+        }
+        
+        function resetForm() {
+            orderForm.reset();
+            document.getElementById('items-container').innerHTML = '';
+            document.getElementById('total-charges').textContent = '₹0.00';
+            document.getElementById('editing-order-id').value = '';
+            conversationState = 'IDLE';
+            lastSearchResults = [];
+            totalItemsToAdd = 0;
+            currentItemIndex = 0;
+            highlightField(null);
+        }
+        
+        function showForm() {
+            orderForm.classList.remove('hidden');
+        }
+
+        function hideForm() {
+            orderForm.classList.add('hidden');
+            resetForm();
+        }
+
+        function setupVoiceRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                voiceAssistantUI.classList.add('hidden');
+                micNotSupportedMessage.classList.remove('hidden');
+                showForm(); // Fallback to manual mode
+                return;
+            }
+
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.lang = 'hi-IN';
+            recognition.interimResults = false;
+
+            recognition.onstart = () => {
+                isListening = true;
+                micBtn.classList.add('listening');
+                assistantStatusEl.textContent = "सुन रहा हूँ...";
+            };
+
+            recognition.onend = () => {
+                isListening = false;
+                micBtn.classList.remove('listening');
+                assistantStatusEl.textContent = "माइक दबाएं और बोलें।";
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                if (event.error === 'no-speech') {
+                    assistantStatusEl.textContent = "कुछ भी सुनाई नहीं दिया। कृपया फिर से प्रयास करें।";
+                } else {
+                    assistantStatusEl.textContent = "आवाज पहचानने में त्रुटि हुई।";
+                }
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript.trim();
+                transcriptEl.textContent = `आपने कहा: "${transcript}"`;
+                processVoiceCommand(transcript);
+            };
+
+            micBtn.addEventListener('click', () => {
+                if (isListening) {
+                    recognition.stop();
+                } else {
+                    recognition.start();
                 }
             });
         }
+        
+        function parseSpokenNumber(text) {
+            const numMap = {
+                'एक': 1, 'one': 1, '1': 1,
+                'दो': 2, 'two': 2, '2': 2, 'to': 2, 'too': 2, 'do': 2,
+                'तीन': 3, 'three': 3, '3': 3,
+                'चार': 4, 'four': 4, '4': 4, 'for': 4,
+                'पांच': 5, 'five': 5, '5': 5,
+                'छह': 6, 'six': 6, '6': 6,
+                'सात': 7, 'seven': 7, '7': 7,
+                'आठ': 8, 'eight': 8, '8': 8,
+                'नौ': 9, 'nine': 9, '9': 9,
+                'दस': 10, 'ten': 10, '10': 10,
+            };
+            const cleanedText = text.toLowerCase().replace(/[.।]/g, '').trim();
+            for (const key in numMap) {
+                if (cleanedText.includes(key)) {
+                    return numMap[key];
+                }
+            }
+            return parseInt(cleanedText, 10);
+        }
+        
+        function parseSpokenDate(text) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const lowerText = text.toLowerCase().replace(/[^a-z0-9]/gi, '');
 
-        document.getElementById('pickup-date').value = order.pickupDate || (order.items && order.items.length > 0 ? order.items[0].pickupDate : '');
-        noteInput.value = order.note || '';
-        updateTotal(order.type);
-    }
-
-    async function receivePayment(amount, mode) {
-        if (!db) { 
-            speak("डेटाबेस कनेक्ट नहीं है।");
-            return; 
+            if (/^\d{8}$/.test(lowerText)) {
+                const day = lowerText.substring(0, 2);
+                const month = lowerText.substring(2, 4);
+                const year = lowerText.substring(4, 8);
+                const parsedDate = new Date(year, month - 1, day);
+                if (!isNaN(parsedDate.getTime())) {
+                    return parsedDate;
+                }
+            }
+            if (lowerText.includes('aaj') || lowerText.includes('today')) return today;
+            if (lowerText.includes('kal') || lowerText.includes('tomorrow')) {
+                const tomorrow = new Date(today);
+                tomorrow.setDate(today.getDate() + 1);
+                return tomorrow;
+            }
+            if (lowerText.includes('parso') || lowerText.includes('parson')) {
+                const dayAfter = new Date(today);
+                dayAfter.setDate(today.getDate() + 2);
+                return dayAfter;
+            }
+            const dateMatch = lowerText.match(/(\d{1,2})/);
+            if (dateMatch) {
+                const day = parseInt(dateMatch[1], 10);
+                if (day > 0 && day <= 31) {
+                    const date = new Date();
+                    date.setHours(0, 0, 0, 0);
+                    if (day < today.getDate()) date.setMonth(today.getMonth() + 1);
+                    date.setDate(day);
+                    return date;
+                }
+            }
+            return null;
         }
 
-        const orderId = editingOrderIdInput.value;
-        if (!orderId) {
-            speak("कोई ऑर्डर लोड नहीं है।");
-            return;
-        }
+        
+        function processVoiceCommand(transcript) {
+            const lowerText = transcript.toLowerCase();
 
-        const orderToUpdate = allOrders.find(o => o.id.toString() === orderId);
-        if (!orderToUpdate) {
-            speak("ऑर्डर नहीं मिला।");
-            return;
-        }
-
-        const newPayment = {
-            id: Date.now(),
-            amount: amount,
-            date: new Date().toISOString(),
-            mode: mode
-        };
-
-        const updatedPayments = [...(orderToUpdate.payments || []), newPayment];
-        const newReceivedPayment = updatedPayments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
-
-        const updates = {
-            payments: updatedPayments,
-            receivedPayment: newReceivedPayment,
-            lastUpdated: new Date().toISOString()
-        };
-
-        try {
-            await db.ref(`orders/${orderToUpdate.firebaseKey}`).update(updates);
-            speak("पेमेंट सफलतापूर्वक रिकॉर्ड हो गया है।");
-            loadOrderIntoForm({...orderToUpdate, ...updates}); 
-        } catch (error) {
-            console.error("Error receiving payment:", error);
-            speak("पेमेंट रिकॉर्ड करने में कोई समस्या हुई।");
-        }
-    }
-    
-    // --- Voice Assistant ---
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const SpeechSynthesis = window.speechSynthesis;
-    let recognition;
-    let assistantState = 'idle'; 
-    let currentItemRow = null;
-
-    if (SpeechRecognition) {
-        recognition = new SpeechRecognition();
-        recognition.continuous = false;
-        recognition.lang = 'hi-IN';
-        recognition.interimResults = false;
-
-        recognition.onstart = () => document.getElementById('mic-btn').classList.add('listening');
-        recognition.onend = () => document.getElementById('mic-btn').classList.remove('listening');
-        recognition.onerror = (e) => console.error("Speech Recognition Error:", e.error);
-        recognition.onresult = (e) => {
-            const transcript = e.results[0][0].transcript.trim().toLowerCase();
-            document.getElementById('transcript').textContent = `You said: "${transcript}"`;
-            processVoiceCommand(transcript);
-        };
-    }
-
-    function speak(text, then) {
-        document.getElementById('assistant-status').textContent = text;
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'hi-IN';
-        if (then) utterance.onend = then;
-        SpeechSynthesis.speak(utterance);
-    }
-    
-    function highlightField(elementId) {
-        document.querySelectorAll('.highlight-field').forEach(el => el.classList.remove('highlight-field'));
-        if (elementId) document.getElementById(elementId)?.classList.add('highlight-field');
-    }
-
-    async function processVoiceCommand(command) {
-        console.log(`State: ${assistantState}, Command: "${command}"`);
-
-        switch(assistantState) {
-            case 'idle':
-                if (command.includes('naya order') || command.includes('order banao')) {
-                    assistantState = 'get_name';
-                    clearForm();
-                    speak("नया ऑर्डर। ग्राहक का नाम क्या है?", () => recognition.start());
-                    highlightField('customer-name');
-                } else if (command.startsWith('search') || command.startsWith('khojo')) {
-                    const query = command.replace('search', '').replace('khojo', '').trim();
-                    if (query) {
-                        searchAndLoadOrder(query);
+            switch (conversationState) {
+                case 'IDLE':
+                    if (lowerText.includes('नया ऑर्डर') || lowerText.includes('new order')) {
+                        startNewOrderFlow();
+                    } else if (lowerText.includes('ऑर्डर खोजो') || lowerText.includes('search order')) {
+                        speak("ऑर्डर खोजने की सुविधा अभी उपलब्ध नहीं है।");
                     } else {
-                        speak("किसे खोजना है?", () => recognition.start());
+                        speak("समझ में नहीं आया। कृपया 'नया ऑर्डर' या 'ऑर्डर खोजो' बोलें।");
                     }
-                } else if (command.includes('form clear karo')) {
-                    clearForm();
-                    speak("फॉर्म साफ़ कर दिया है।");
-                }
-                break;
-            
-            case 'get_name':
-                customerNameInput.value = command.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-                customerNameInput.dispatchEvent(new Event('input', { bubbles: true })); // Use 'input' for better response
-                setTimeout(() => { // Wait for autofill
-                    if (customerMobileInput.value) {
-                        assistantState = 'get_type';
-                        speak("ग्राहक मिल गया। ऑर्डर का प्रकार क्या है?", () => recognition.start());
+                    break;
+
+                case 'AWAIT_CUSTOMER_NAME':
+                    document.getElementById('customer-name').value = transcript;
+                    conversationState = 'AWAIT_MOBILE';
+                    speak("मोबाइल नंबर बताएं।", () => recognition.start());
+                    highlightField('customer-mobile');
+                    break;
+                
+                case 'AWAIT_MOBILE':
+                    const mobile = transcript.replace(/\s/g, '');
+                    if (/^\d{10}$/.test(mobile)) {
+                        document.getElementById('customer-mobile').value = mobile;
+                        conversationState = 'AWAIT_ORDER_TYPE';
+                        speak("ऑर्डर का प्रकार बताएं: सिलाई के लिए 1 या अल्टरेशन के लिए 2 बोलें।", () => recognition.start());
                         highlightField('order-type');
                     } else {
-                        assistantState = 'get_mobile';
-                        speak("ठीक है। मोबाइल नंबर क्या है?", () => recognition.start());
-                        highlightField('customer-mobile');
+                        speak("मोबाइल नंबर सही नहीं है। कृपया 10 अंकों का नंबर फिर से बोलें।", () => recognition.start());
                     }
-                }, 300);
-                break;
-            
-            case 'get_mobile':
-                customerMobileInput.value = command.replace(/\s/g, '');
-                assistantState = 'get_type';
-                speak("ठीक है। क्या यह नया सूट है, या ऑल्टरेशन?", () => recognition.start());
-                highlightField('order-type');
-                break;
+                    break;
 
-            case 'get_type':
-                if (command.includes('naya suit') || command.includes('new suit')) {
-                    orderTypeSelect.value = 'stitching';
-                    orderTypeSelect.dispatchEvent(new Event('change'));
-                    assistantState = 'get_stitching_item';
-                    speak("ठीक है, नया सूट। पहला आइटम क्या है?", () => recognition.start());
-                } else if (command.includes('alteration') || command.includes('repair')) {
-                    orderTypeSelect.value = 'alteration';
-                    orderTypeSelect.dispatchEvent(new Event('change'));
-                    assistantState = 'get_alteration_item';
-                    speak("ठीक है, ऑल्टरेशन। पहला आइटम क्या है?", () => recognition.start());
-                } else {
-                    speak("समझ नहीं आया। नया सूट या ऑल्टरेशन?", () => recognition.start());
-                }
-                break;
-            
-            case 'get_stitching_item':
-            case 'get_alteration_item':
-                const type = assistantState === 'get_stitching_item' ? 'stitching' : 'alteration';
-                const prices = type === 'stitching' ? STITCHING_PRICES : ALTERATION_PRICES;
-                const matchingKey = Object.keys(prices).find(p => command.includes(p));
+                case 'AWAIT_ORDER_TYPE':
+                    const isStitching = ['stitching', 'silai', 'सिलाई', 'stitch', 'st', '1', 'one', 'एक'].some(keyword => lowerText.includes(keyword));
+                    const isAlteration = ['alterations', 'alteration', 'alter', 'अल्टरेशन', 'at', '2', 'two', 'to', 'too', 'do', 'दो'].some(keyword => lowerText.includes(keyword));
 
-                if (matchingKey) {
-                    const row = createItemRow(type, `${type}-items-container`);
-                    currentItemRow = row;
-                    row.querySelector('.description-select').value = matchingKey;
-                    row.querySelector('.description-select').dispatchEvent(new Event('change'));
-                    assistantState = 'get_item_note';
-                    speak(`"${matchingKey}" जोड़ दिया गया है। इस आइटम के लिए कोई नोट है? या 'नहीं' बोलें।`, () => recognition.start());
-                    highlightField(null); // No specific field for note yet
-                } else {
-                    speak("मैं यह आइटम नहीं पहचान पाया। कृपया फिर से प्रयास करें।", () => recognition.start());
-                }
-                break;
-
-            case 'get_item_note':
-                if (command !== 'nahin' && command !== 'no') {
-                    if (currentItemRow) {
-                        currentItemRow.querySelector('.note-input').value = command;
+                    if (isStitching) {
+                        document.getElementById('order-type').value = 'stitching';
+                        conversationState = 'AWAIT_ITEM_COUNT';
+                        speak("कितने आइटम जोड़ने हैं?", () => recognition.start());
+                        highlightField(null);
+                    } else if (isAlteration) {
+                        document.getElementById('order-type').value = 'alteration';
+                        conversationState = 'AWAIT_ITEM_COUNT';
+                        speak("कितने आइटम जोड़ने हैं?", () => recognition.start());
+                        highlightField(null);
+                    } else {
+                        speak("समझ में नहीं आया। सिलाई के लिए 1 या अल्टरेशन के लिए 2 बोलें।", () => recognition.start());
                     }
-                }
-                assistantState = 'confirm_or_add';
-                speak("ठीक है। और आइटम जोड़ने के लिए उसका नाम बोलें, या 'ऑर्डर सेव करें' बोलें।", () => recognition.start());
-                break;
-            
-            case 'confirm_or_add':
-                 if (command.includes('save') || command.includes('save karo')) {
-                    saveOrder();
-                    assistantState = 'idle';
-                    highlightField(null);
-                 } else { // Assume any other command is a new item
-                    const type = orderTypeSelect.value;
-                    assistantState = type === 'stitching' ? 'get_stitching_item' : 'get_alteration_item';
-                    processVoiceCommand(command); // Re-process the command as a new item
-                 }
-                 break;
-            
-            case 'edit_order':
-                if (command.includes('save') || command.includes('changes')) {
-                    saveOrder();
-                    assistantState = 'idle';
-                    highlightField(null);
-                } else if (command.includes('payment receive') || command.includes('payment lo')) {
-                    assistantState = 'receive_payment_amount';
-                    speak("कितना अमाउंट रिसीव किया?", () => recognition.start());
-                    highlightField(null);
-                } else {
-                    speak("बदलाव करने के बाद 'सेव करें' बोलें, या 'पेमेंट रिसीव करो' बोलें।", () => recognition.start());
-                }
-                break;
-            
-            case 'receive_payment_amount':
-                const amountMatch = command.match(/(\d+)/);
-                if (amountMatch) {
-                    const amount = parseInt(amountMatch[0], 10);
-                    tempPaymentInfo = { amount }; 
-                    assistantState = 'receive_payment_mode';
-                    speak("पेमेंट मोड क्या था? कैश या यूपीआई?", () => recognition.start());
-                } else {
-                    speak("अमाउंट समझ नहीं आया। कृपया फिर से बोलें।", () => recognition.start());
-                }
-                break;
-
-            case 'receive_payment_mode':
-                let mode = 'Other';
-                if (command.includes('cash')) { mode = 'Cash'; } 
-                else if (command.includes('upi')) { mode = 'UPI'; }
+                    break;
                 
-                tempPaymentInfo.mode = mode;
-                receivePayment(tempPaymentInfo.amount, tempPaymentInfo.mode);
-                tempPaymentInfo = {};
-                assistantState = 'edit_order'; // Go back to edit state after payment
-                break;
-        }
-    }
-    
-    // --- Event Listeners ---
-    orderTypeSelect.addEventListener('change', () => {
-        const type = orderTypeSelect.value;
-        stitchingSection.classList.toggle('hidden', type !== 'stitching');
-        alterationSection.classList.toggle('hidden', type !== 'alteration');
-        if (type === 'stitching' && stitchingSection.querySelector('.item-row') === null) {
-            createItemRow('stitching', 'stitching-items-container');
-        } else if (type === 'alteration' && alterationSection.querySelector('.item-row') === null) {
-            createItemRow('alteration', 'alteration-items-container');
-        }
-    });
+                case 'AWAIT_ITEM_COUNT':
+                    const itemCount = parseSpokenNumber(transcript);
+                    if (itemCount && itemCount > 0 && itemCount <= 10) {
+                        totalItemsToAdd = itemCount;
+                        currentItemIndex = 0;
+                        document.getElementById('items-container').innerHTML = '';
+                        for (let i = 0; i < totalItemsToAdd; i++) {
+                            addItemRow(i);
+                        }
+                        conversationState = 'AWAIT_ITEM_NAME';
+                        speak(`ठीक है, ${totalItemsToAdd} आइटम। पहले आइटम का नाम बताएं।`, () => recognition.start());
+                        highlightField(`item-name-0`);
+                    } else {
+                        speak("कृपया 1 और 10 के बीच एक संख्या बताएं।", () => recognition.start());
+                    }
+                    break;
 
-    customerNameInput.addEventListener('input', () => {
-        const selectedCustomer = allCustomers.find(c => c.name.toLowerCase() === customerNameInput.value.toLowerCase());
-        if (selectedCustomer) {
-            customerMobileInput.value = selectedCustomer.mobile;
-        }
-    });
+                case 'AWAIT_ITEM_NAME':
+                    document.getElementById(`item-name-${currentItemIndex}`).value = transcript;
+                    conversationState = 'AWAIT_ITEM_CHARGES';
+                    speak("इसके चार्ज कितने हैं?", () => recognition.start());
+                    highlightField(`item-charges-${currentItemIndex}`);
+                    break;
 
-    addStitchingItemBtn.addEventListener('click', () => createItemRow('stitching', 'stitching-items-container'));
-    addAlterationItemBtn.addEventListener('click', () => createItemRow('alteration', 'alteration-items-container'));
-    orderForm.addEventListener('submit', saveOrder);
-    clearFormBtn.addEventListener('click', clearForm);
-    
-    document.getElementById('manual-search-btn').addEventListener('click', () => {
-        const query = document.getElementById('manual-search-input').value.trim();
-        if (query) {
-            searchAndLoadOrder(query, true);
+                case 'AWAIT_ITEM_CHARGES':
+                    const charges = transcript.match(/\d+/);
+                    if (charges) {
+                        document.getElementById(`item-charges-${currentItemIndex}`).value = charges[0];
+                        updateTotalCharges();
+                        currentItemIndex++;
+                        if (currentItemIndex < totalItemsToAdd) {
+                            conversationState = 'AWAIT_ITEM_NAME';
+                            speak(`अगले आइटम का नाम बताएं।`, () => recognition.start());
+                            highlightField(`item-name-${currentItemIndex}`);
+                        } else {
+                            conversationState = 'AWAIT_PICKUP_DATE';
+                            speak("सभी आइटम जोड़ दिए गए हैं। पिकअप की तारीख बताएं। आप 'आज', 'कल', या '02102025' भी कह सकते हैं।", () => recognition.start());
+                            highlightField('pickup-date');
+                        }
+                    } else {
+                        speak("चार्ज समझ में नहीं आए। कृपया राशि फिर से बोलें।", () => recognition.start());
+                    }
+                    break;
+                
+                case 'AWAIT_PICKUP_DATE':
+                    const date = parseSpokenDate(transcript);
+                    if (date) {
+                        const dateString = date.toISOString().split('T')[0];
+                        document.getElementById('pickup-date').value = dateString;
+                        conversationState = 'AWAIT_SAVE_CONFIRMATION';
+                        speak("ऑर्डर सेव करने के लिए 1 या हाँ बोलें, रद्द करने के लिए 2 या ना बोलें।", () => recognition.start());
+                        highlightField(null);
+                    } else {
+                        speak("तारीख समझ में नहीं आई। कृपया फिर से बोलें, जैसे 'आज', 'कल', या '02102025' ।", () => recognition.start());
+                    }
+                    break;
+                
+                case 'AWAIT_SAVE_CONFIRMATION':
+                    const confirmResponses = ['1', 'one', 'yes', 'haan', 'confirm', 'हाँ', 'एक'];
+                    const cancelResponses = ['2', 'two', 'to', 'too', 'do', 'no', 'nahi', 'cancel', 'नहीं', 'दो'];
+                    
+                    if (confirmResponses.some(res => lowerText.includes(res))) {
+                        orderForm.dispatchEvent(new Event('submit'));
+                    } else if (cancelResponses.some(res => lowerText.includes(res))) {
+                         speak("ऑर्डर रद्द कर दिया गया है।", () => {
+                            hideForm();
+                            resetForm();
+                        });
+                    } else {
+                        speak("समझ में नहीं आया। सेव करने के लिए 1 या हाँ, रद्द करने के लिए 2 या ना बोलें।", () => recognition.start());
+                    }
+                    break;
+            }
         }
-    });
-    document.getElementById('manual-search-input').addEventListener('keydown', (e) => {
-        if(e.key === 'Enter') {
-            e.preventDefault();
-            document.getElementById('manual-search-btn').click();
+
+        function startNewOrderFlow() {
+            resetForm();
+            showForm();
+            document.getElementById('order-number').value = getNextOrderNumber();
+            conversationState = 'AWAIT_CUSTOMER_NAME';
+            speak("नया ऑर्डर शुरू कर रहा हूँ। ग्राहक का नाम बताएं।", () => {
+                if (recognition) recognition.start();
+            });
+            highlightField('customer-name');
         }
-    });
-
-    document.getElementById('mic-btn').addEventListener('click', () => {
-        if (!recognition) { showToast("Speech recognition is not supported on this browser."); return; }
-        if (document.getElementById('mic-btn').classList.contains('listening')) {
-            recognition.stop();
-        } else {
-            speak("मैं सुन रही हूँ...", () => recognition.start());
+        
+        function addItemRow(index) {
+            const container = document.getElementById('items-container');
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'item-row grid grid-cols-1 md:grid-cols-3 gap-2 items-center';
+            itemDiv.innerHTML = `
+                <div class="md:col-span-2">
+                    <label class="sr-only" for="item-name-${index}">Item Name</label>
+                    <input type="text" id="item-name-${index}" placeholder="Item ${index + 1} Name" class="form-input">
+                </div>
+                <div>
+                    <label class="sr-only" for="item-charges-${index}">Charges</label>
+                    <input type="number" id="item-charges-${index}" placeholder="Charges" class="form-input" min="0" oninput="updateTotalCharges()">
+                </div>`;
+            container.appendChild(itemDiv);
         }
-    });
-    
-    document.addEventListener('DOMContentLoaded', initializeFirebase);
-</script>
 
+        function updateTotalCharges() {
+            let total = 0;
+            document.querySelectorAll('[id^="item-charges-"]').forEach(input => {
+                total += parseFloat(input.value) || 0;
+            });
+            document.getElementById('total-charges').textContent = `₹${total.toFixed(2)}`;
+        }
 
+        // --- Event Listeners & Init ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeFirebase();
+            setupVoiceRecognition();
+
+            manualSearchBtn.addEventListener('click', () => {
+                showToast("Manual search is not fully implemented yet.");
+            });
+
+            document.getElementById('add-item-btn').addEventListener('click', () => {
+                 const itemIndex = document.querySelectorAll('.item-row').length;
+                 addItemRow(itemIndex);
+            });
+            
+            document.getElementById('clear-form-btn').addEventListener('click', () => {
+                hideForm();
+                resetForm();
+            });
+
+            orderForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const newOrder = {
+                    id: Date.now(),
+                    orderNumber: document.getElementById('order-number').value,
+                    customerName: document.getElementById('customer-name').value,
+                    customerMobile: document.getElementById('customer-mobile').value,
+                    type: document.getElementById('order-type').value,
+                    bookingDate: new Date().toISOString(),
+                    pickupDate: document.getElementById('pickup-date').value,
+                    status: 'Pending',
+                    items: [],
+                    payments: [],
+                    receivedPayment: 0
+                };
+
+                document.querySelectorAll('.item-row').forEach((row, index) => {
+                    newOrder.items.push({
+                        item: row.querySelector(`#item-name-${index}`).value,
+                        charges: parseFloat(row.querySelector(`#item-charges-${index}`).value) || 0
+                    });
+                });
+                
+                if(db) {
+                    db.ref('orders/' + newOrder.id).set(newOrder)
+                    .then(() => {
+                        speak(`ऑर्डर नंबर ${newOrder.orderNumber} सफलतापूर्वक सेव हो गया है।`);
+                        showToast("Order saved successfully!");
+                        hideForm();
+                        resetForm();
+                    })
+                    .catch(err => {
+                        speak("ऑर्डर सेव करने में त्रुटि हुई।");
+                        showToast("Error saving order: " + err.message, 5000);
+                    });
+                } else {
+                    speak("डेटाबेस से कनेक्शन नहीं है। ऑर्डर सेव नहीं किया जा सका।");
+                    showToast("Not connected to database. Order not saved.", 5000);
+                }
+            });
+        });
+    </script>
 
 <script src="./script.js"></script></body></html>
