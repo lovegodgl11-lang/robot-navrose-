@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class=""><head><script>window.livecodes = window.livecodes || {};</script><title>Voice order </title><meta name="title" content="Voice order "><meta name="description" content="Update automatically "><meta charset="UTF-8">
+<html lang="en" class=""><head><script>window.livecodes = window.livecodes || {};</script><title>Robot style </title><meta name="title" content="Robot style "><meta name="description" content="Update version "><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="stylesheet" href="./style.css"><script src="https://cdn.jsdelivr.net/npm/es-module-shims@1.10.0/dist/es-module-shims.js" async=""></script><script type="importmap">{
   "imports": {}
 }</script></head><body>
@@ -67,6 +67,15 @@
             <a href="index.html" class="text-sm font-semibold text-indigo-600 hover:text-indigo-800">← Back to Main App</a>
         </div>
         
+        <!-- Manual Search UI -->
+        <div id="manual-search-ui" class="bg-white p-4 rounded-lg shadow-md mb-6">
+            <label for="manual-search-input" class="block text-sm font-medium text-gray-700 mb-2">Search Order</label>
+            <div class="flex items-center gap-2">
+                <input type="search" id="manual-search-input" placeholder="Enter Order ID or Customer Name..." class="form-input w-full">
+                <button type="button" id="manual-search-btn" class="btn-primary flex-shrink-0">Search</button>
+            </div>
+        </div>
+
         <!-- Voice Assistant UI -->
         <div id="voice-assistant-ui" class="bg-white p-4 rounded-lg shadow-md mb-6">
             <div class="flex items-center gap-4">
@@ -192,6 +201,7 @@
     let db;
     let allOrders = [];
     let allCustomers = [];
+    let tempPaymentInfo = {};
 
     // --- UI Logic ---
     function showToast(message, ms = 3000) {
@@ -263,6 +273,7 @@
         updateTotal('stitching');
         updateTotal('alteration');
         highlightField(null);
+        assistantState = 'idle';
     }
     
     // --- Data Logic ---
@@ -346,7 +357,6 @@
 
         if (orderType === 'stitching') {
             delete orderData.charges;
-            // pickupDate is per-item for stitching, so remove top-level one
             delete orderData.pickupDate; 
         }
 
@@ -358,7 +368,12 @@
                 return;
             }
             try {
-                await db.ref(`orders/${orderToUpdate.firebaseKey}`).update(orderData);
+                // Preserve existing fields that are not in the form
+                const finalUpdateData = {
+                    ...orderToUpdate,
+                    ...orderData
+                };
+                await db.ref(`orders/${orderToUpdate.firebaseKey}`).update(finalUpdateData);
                 const confirmationMessage = `Order #${orderToUpdate.orderNumber} updated successfully!`;
                 showToast(confirmationMessage);
                 speak(`ऑर्डर नंबर ${orderToUpdate.orderNumber.replace(/-/g, ' ')} अपडेट हो गया है।`);
@@ -400,21 +415,30 @@
         }
     }
 
-    function searchAndLoadOrder(query) {
+    function searchAndLoadOrder(query, isManualSearch = false) {
+        const lowerQuery = query.toLowerCase();
         const results = allOrders.filter(o => 
-            (o.customerName && o.customerName.toLowerCase().includes(query)) ||
-            (o.orderNumber && o.orderNumber.toLowerCase().includes(query))
+            (o.customerName && o.customerName.toLowerCase().includes(lowerQuery)) ||
+            (o.orderNumber && o.orderNumber.toLowerCase().includes(lowerQuery))
         ).sort((a,b) => new Date(b.bookingDate) - new Date(a.bookingDate));
 
         if (results.length === 0) {
-            speak(`"${query}" के लिए कोई ऑर्डर नहीं मिला।`);
+            if (isManualSearch) {
+                showToast(`No orders found for "${query}".`);
+            } else {
+                speak(`"${query}" के लिए कोई ऑर्डर नहीं मिला।`);
+            }
             assistantState = 'idle';
         } else {
-            speak(`${results.length} ऑर्डर मिले हैं। सबसे नया वाला लोड कर रहा हूँ।`, () => {
-                loadOrderIntoForm(results[0]);
-                assistantState = 'edit_order';
-                speak("ऑर्डर लोड हो गया है। आप बदलाव करके 'सेव करें' बोल सकते हैं।", () => recognition.start());
-            });
+            loadOrderIntoForm(results[0]);
+            assistantState = 'edit_order'; // Set state for both manual and voice search
+            if (isManualSearch) {
+                showToast(`Loaded latest order for "${query}". You can now edit and save.`);
+            } else {
+                speak(`${results.length} ऑर्डर मिले हैं। सबसे नया वाला लोड कर रहा हूँ।`, () => {
+                    speak("ऑर्डर लोड हो गया है। आप बदलाव करके 'सेव करें' या 'पेमेंट रिसीव करो' बोल सकते हैं।", () => recognition.start());
+                });
+            }
         }
     }
 
@@ -427,9 +451,7 @@
         orderTypeSelect.dispatchEvent(new Event('change'));
 
         const containerId = `${order.type}-items-container`;
-        const itemsToLoad = order.type === 'stitching' ? order.items : (order.type === 'alteration' ? [{item: order.description, charges: order.charges, note: ''}] : order.items || []);
-
-        // This needs to handle both stitching and alteration's different structures
+        
         if (order.type === 'stitching' && order.items) {
              order.items.forEach(item => {
                 const row = createItemRow('stitching', containerId);
@@ -438,14 +460,15 @@
                 row.querySelector('.amount-input').value = item.charges || 0;
             });
         } else if (order.type === 'alteration') {
-            const alterationItems = order.description.split(', ');
+            const alterationItems = order.description.split(', ').filter(Boolean);
             alterationItems.forEach((desc, index) => {
                 const row = createItemRow('alteration', containerId);
                 const matchingKey = Object.keys(ALTERATION_PRICES).find(p => desc.trim().toLowerCase() === p);
                 if(matchingKey){
                     row.querySelector('.description-select').value = matchingKey;
-                    // For simplicity, distribute charges equally if not 1 item. A better logic might be needed.
-                    row.querySelector('.amount-input').value = order.charges / alterationItems.length;
+                    // Pro-rate charges if multiple items exist, otherwise use total
+                    const chargePerItem = alterationItems.length > 1 ? (parseFloat(order.charges) / alterationItems.length) : parseFloat(order.charges);
+                    row.querySelector('.amount-input').value = chargePerItem || 0;
                 }
             });
         }
@@ -453,6 +476,50 @@
         document.getElementById('pickup-date').value = order.pickupDate || (order.items && order.items.length > 0 ? order.items[0].pickupDate : '');
         noteInput.value = order.note || '';
         updateTotal(order.type);
+    }
+
+    async function receivePayment(amount, mode) {
+        if (!db) { 
+            speak("डेटाबेस कनेक्ट नहीं है।");
+            return; 
+        }
+
+        const orderId = editingOrderIdInput.value;
+        if (!orderId) {
+            speak("कोई ऑर्डर लोड नहीं है।");
+            return;
+        }
+
+        const orderToUpdate = allOrders.find(o => o.id.toString() === orderId);
+        if (!orderToUpdate) {
+            speak("ऑर्डर नहीं मिला।");
+            return;
+        }
+
+        const newPayment = {
+            id: Date.now(),
+            amount: amount,
+            date: new Date().toISOString(),
+            mode: mode
+        };
+
+        const updatedPayments = [...(orderToUpdate.payments || []), newPayment];
+        const newReceivedPayment = updatedPayments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+
+        const updates = {
+            payments: updatedPayments,
+            receivedPayment: newReceivedPayment,
+            lastUpdated: new Date().toISOString()
+        };
+
+        try {
+            await db.ref(`orders/${orderToUpdate.firebaseKey}`).update(updates);
+            speak("पेमेंट सफलतापूर्वक रिकॉर्ड हो गया है।");
+            loadOrderIntoForm({...orderToUpdate, ...updates}); 
+        } catch (error) {
+            console.error("Error receiving payment:", error);
+            speak("पेमेंट रिकॉर्ड करने में कोई समस्या हुई।");
+        }
     }
     
     // --- Voice Assistant ---
@@ -516,7 +583,7 @@
             
             case 'get_name':
                 customerNameInput.value = command.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-                customerNameInput.dispatchEvent(new Event('change', { bubbles: true }));
+                customerNameInput.dispatchEvent(new Event('input', { bubbles: true })); // Use 'input' for better response
                 setTimeout(() => { // Wait for autofill
                     if (customerMobileInput.value) {
                         assistantState = 'get_type';
@@ -596,12 +663,39 @@
             
             case 'edit_order':
                 if (command.includes('save') || command.includes('changes')) {
-                    saveOrder(); // Will use the hidden ID
+                    saveOrder();
                     assistantState = 'idle';
                     highlightField(null);
+                } else if (command.includes('payment receive') || command.includes('payment lo')) {
+                    assistantState = 'receive_payment_amount';
+                    speak("कितना अमाउंट रिसीव किया?", () => recognition.start());
+                    highlightField(null);
                 } else {
-                    speak("बदलाव करने के बाद 'सेव चेंजेज' बोलें।", () => recognition.start());
+                    speak("बदलाव करने के बाद 'सेव करें' बोलें, या 'पेमेंट रिसीव करो' बोलें।", () => recognition.start());
                 }
+                break;
+            
+            case 'receive_payment_amount':
+                const amountMatch = command.match(/(\d+)/);
+                if (amountMatch) {
+                    const amount = parseInt(amountMatch[0], 10);
+                    tempPaymentInfo = { amount }; 
+                    assistantState = 'receive_payment_mode';
+                    speak("पेमेंट मोड क्या था? कैश या यूपीआई?", () => recognition.start());
+                } else {
+                    speak("अमाउंट समझ नहीं आया। कृपया फिर से बोलें।", () => recognition.start());
+                }
+                break;
+
+            case 'receive_payment_mode':
+                let mode = 'Other';
+                if (command.includes('cash')) { mode = 'Cash'; } 
+                else if (command.includes('upi')) { mode = 'UPI'; }
+                
+                tempPaymentInfo.mode = mode;
+                receivePayment(tempPaymentInfo.amount, tempPaymentInfo.mode);
+                tempPaymentInfo = {};
+                assistantState = 'edit_order'; // Go back to edit state after payment
                 break;
         }
     }
@@ -629,6 +723,20 @@
     addAlterationItemBtn.addEventListener('click', () => createItemRow('alteration', 'alteration-items-container'));
     orderForm.addEventListener('submit', saveOrder);
     clearFormBtn.addEventListener('click', clearForm);
+    
+    document.getElementById('manual-search-btn').addEventListener('click', () => {
+        const query = document.getElementById('manual-search-input').value.trim();
+        if (query) {
+            searchAndLoadOrder(query, true);
+        }
+    });
+    document.getElementById('manual-search-input').addEventListener('keydown', (e) => {
+        if(e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('manual-search-btn').click();
+        }
+    });
+
     document.getElementById('mic-btn').addEventListener('click', () => {
         if (!recognition) { showToast("Speech recognition is not supported on this browser."); return; }
         if (document.getElementById('mic-btn').classList.contains('listening')) {
