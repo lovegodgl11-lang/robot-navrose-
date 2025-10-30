@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class=""><head><script>window.livecodes = window.livecodes || {};</script><title>Update automatically </title><meta name="title" content="Update automatically "><meta name="description" content="Voice entry "><meta charset="UTF-8">
+<html lang="en" class=""><head><script>window.livecodes = window.livecodes || {};</script><title>Robot </title><meta name="title" content="Robot "><meta name="description" content="Voice search, voice entry "><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="stylesheet" href="./style.css"><script src="https://cdn.jsdelivr.net/npm/es-module-shims@1.10.0/dist/es-module-shims.js" async=""></script><script type="importmap">{
   "imports": {}
 }</script></head><body>
@@ -66,49 +66,59 @@
         }
         .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: #111827; color: white; padding: 0.75rem 1.25rem; border-radius: 0.75rem; box-shadow: 0 6px 18px rgba(0,0,0,0.2); transition: all .3s ease-in-out; z-index:1200; transform: translateY(20px); opacity: 0; }
         .toast.show { transform: translateY(0); opacity: 1; }
+        .search-result-card {
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .search-result-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-color: var(--accent-primary);
+        }
     </style>
 
 
 
     <div class="max-w-4xl mx-auto p-4">
         <div class="flex justify-between items-center mb-4">
-            <h1 class="text-2xl font-bold text-gray-800">Automated Order Entry</h1>
+            <h1 class="text-2xl font-bold text-gray-800">Automated Order Management</h1>
             <a href="index.html" class="text-sm font-semibold text-indigo-600 hover:text-indigo-800">← Back to Main App</a>
         </div>
         
-        <div id="initial-interaction-area" class="space-y-6">
-            <!-- Manual Search UI -->
-            <div id="manual-search-ui" class="bg-white p-4 rounded-lg shadow-md">
-                <label for="manual-search-input" class="block text-sm font-medium text-gray-700 mb-2">Search Order</label>
-                <div class="flex items-center gap-2">
-                    <input type="search" id="manual-search-input" placeholder="Enter Order ID or Customer Name..." class="form-input w-full">
-                    <button type="button" id="manual-search-btn" class="btn-primary flex-shrink-0">Search</button>
-                </div>
-            </div>
-
-            <!-- Voice Assistant UI -->
-            <div id="voice-assistant-ui" class="bg-white p-4 rounded-lg shadow-md">
+        <div class="space-y-4">
+            <!-- Global Search & Voice UI -->
+            <div id="interaction-ui" class="bg-white p-4 rounded-lg shadow-md">
                 <div class="flex items-center gap-4">
-                    <button id="mic-btn" class="w-14 h-14 bg-indigo-600 text-white rounded-full flex items-center justify-center flex-shrink-0" aria-label="Start Voice Assistant">
+                     <button id="mic-btn" class="w-14 h-14 bg-indigo-600 text-white rounded-full flex items-center justify-center flex-shrink-0" aria-label="Start Voice Assistant">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
                     </button>
-                    <div class="w-full">
-                        <p id="assistant-status" class="text-sm font-semibold text-gray-700">माइक दबाएं और 'नया ऑर्डर' या 'ऑर्डर खोजो' बोलें।</p>
-                        <p id="transcript" class="text-xs text-gray-500 italic h-4"></p>
+                    <div class="w-full relative">
+                        <input type="search" id="global-search-input" placeholder="Say 'New Order' or search by Order ID, Customer Name..." class="form-input w-full pr-10">
+                         <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path></svg>
+                        </div>
                     </div>
+                </div>
+                 <div class="mt-2 pl-16">
+                    <p id="assistant-status" class="text-sm font-semibold text-gray-700">Ready for your command.</p>
+                    <p id="transcript" class="text-xs text-gray-500 italic h-4"></p>
                 </div>
             </div>
         </div>
+
+        <!-- Search Results -->
+        <div id="search-results-container" class="mt-4 space-y-2"></div>
 
         <!-- Fallback message -->
         <div id="mic-not-supported-message" class="hidden bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md my-6" role="alert">
             <p class="font-bold">Voice Control Unavailable</p>
-            <p>Your browser does not support voice commands, or there was an error. Please use manual entry below.</p>
+            <p>Your browser does not support voice commands. Please use manual entry.</p>
         </div>
 
         <!-- Main Form -->
         <form id="order-form" class="bg-white p-6 rounded-lg shadow-md space-y-6 mt-6 hidden">
             <input type="hidden" id="editing-order-id">
+            <h2 id="form-title" class="text-xl font-bold text-gray-800">New Order</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label for="order-number" class="block text-sm font-medium text-gray-700">Order Number</label>
@@ -171,24 +181,27 @@
         
         let db;
         let allOrders = [];
+        let itemCounter = 0;
 
         // Voice Assistant State
         let recognition;
         let isListening = false;
-        let conversationState = 'IDLE'; // IDLE, AWAIT_CUSTOMER_NAME, AWAIT_MOBILE, AWAIT_ORDER_TYPE, AWAIT_ITEM_COUNT, AWAIT_ITEM_NAME, AWAIT_ITEM_CHARGES, AWAIT_PICKUP_DATE, AWAIT_SAVE_CONFIRMATION
+        let conversationState = 'IDLE';
+        let stateContext = {}; // To hold temporary info like what field to edit
         let currentItemIndex = 0;
         let totalItemsToAdd = 0;
         let lastSearchResults = [];
 
         // DOM Elements
         const orderForm = document.getElementById('order-form');
-        const voiceAssistantUI = document.getElementById('voice-assistant-ui');
         const micNotSupportedMessage = document.getElementById('mic-not-supported-message');
         const micBtn = document.getElementById('mic-btn');
         const assistantStatusEl = document.getElementById('assistant-status');
         const transcriptEl = document.getElementById('transcript');
-        const manualSearchInput = document.getElementById('manual-search-input');
-        const manualSearchBtn = document.getElementById('manual-search-btn');
+        const globalSearchInput = document.getElementById('global-search-input');
+        const searchResultsContainer = document.getElementById('search-results-container');
+        const clearFormBtn = document.getElementById('clear-form-btn');
+        const addItemBtn = document.getElementById('add-item-btn');
 
         function showToast(message, ms = 3000) {
             const t = document.getElementById('toast');
@@ -204,11 +217,12 @@
                 onEndCallback();
                 return;
             }
-            speechSynthesis.cancel(); // Prevent overlapping speech
+            speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'hi-IN'; // Prioritize Hindi voice
+            utterance.lang = 'en-IN';
             utterance.rate = 0.9;
             utterance.onend = onEndCallback;
+            assistantStatusEl.textContent = text;
             speechSynthesis.speak(utterance);
         }
         
@@ -219,6 +233,7 @@
                 if (el) {
                     el.classList.add('highlight-field');
                     el.focus();
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
             }
         }
@@ -252,7 +267,9 @@
             document.getElementById('items-container').innerHTML = '';
             document.getElementById('total-charges').textContent = '₹0.00';
             document.getElementById('editing-order-id').value = '';
+            itemCounter = 0;
             conversationState = 'IDLE';
+            stateContext = {};
             lastSearchResults = [];
             totalItemsToAdd = 0;
             currentItemIndex = 0;
@@ -265,47 +282,45 @@
 
         function hideForm() {
             orderForm.classList.add('hidden');
+            searchResultsContainer.innerHTML = '';
             resetForm();
         }
 
         function setupVoiceRecognition() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) {
-                voiceAssistantUI.classList.add('hidden');
+                micBtn.disabled = true;
                 micNotSupportedMessage.classList.remove('hidden');
-                showForm(); // Fallback to manual mode
                 return;
             }
 
             recognition = new SpeechRecognition();
             recognition.continuous = false;
-            recognition.lang = 'hi-IN';
+            recognition.lang = 'en-IN';
             recognition.interimResults = false;
 
             recognition.onstart = () => {
                 isListening = true;
                 micBtn.classList.add('listening');
-                assistantStatusEl.textContent = "सुन रहा हूँ...";
             };
 
             recognition.onend = () => {
                 isListening = false;
                 micBtn.classList.remove('listening');
-                assistantStatusEl.textContent = "माइक दबाएं और बोलें।";
             };
 
             recognition.onerror = (event) => {
                 console.error('Speech recognition error:', event.error);
                 if (event.error === 'no-speech') {
-                    assistantStatusEl.textContent = "कुछ भी सुनाई नहीं दिया। कृपया फिर से प्रयास करें।";
+                    assistantStatusEl.textContent = "Didn't hear anything. Please try again.";
                 } else {
-                    assistantStatusEl.textContent = "आवाज पहचानने में त्रुटि हुई।";
+                    assistantStatusEl.textContent = "Voice recognition error.";
                 }
             };
 
             recognition.onresult = (event) => {
                 const transcript = event.results[0][0].transcript.trim();
-                transcriptEl.textContent = `आपने कहा: "${transcript}"`;
+                transcriptEl.textContent = `You said: "${transcript}"`;
                 processVoiceCommand(transcript);
             };
 
@@ -313,31 +328,53 @@
                 if (isListening) {
                     recognition.stop();
                 } else {
-                    recognition.start();
+                    try { recognition.start(); } catch(e) { console.error("Could not start recognition", e); }
                 }
             });
         }
         
+        // ... (keep existing parseSpokenNumber and parseSpokenDate functions)
         function parseSpokenNumber(text) {
-            const numMap = {
-                'एक': 1, 'one': 1, '1': 1,
-                'दो': 2, 'two': 2, '2': 2, 'to': 2, 'too': 2, 'do': 2,
-                'तीन': 3, 'three': 3, '3': 3,
-                'चार': 4, 'four': 4, '4': 4, 'for': 4,
-                'पांच': 5, 'five': 5, '5': 5,
-                'छह': 6, 'six': 6, '6': 6,
-                'सात': 7, 'seven': 7, '7': 7,
-                'आठ': 8, 'eight': 8, '8': 8,
-                'नौ': 9, 'nine': 9, '9': 9,
-                'दस': 10, 'ten': 10, '10': 10,
-            };
-            const cleanedText = text.toLowerCase().replace(/[.।]/g, '').trim();
-            for (const key in numMap) {
-                if (cleanedText.includes(key)) {
-                    return numMap[key];
+            const cleanedText = text.toLowerCase().replace(/[.।,-]/g, '').trim();
+
+            const directNumberMatch = cleanedText.match(/\d+/);
+            if (directNumberMatch) {
+                const num = parseInt(directNumberMatch[0], 10);
+                if (!isNaN(num)) {
+                    return num;
                 }
             }
-            return parseInt(cleanedText, 10);
+
+            const wordMap = {
+                'zero': 0, 'shunya': 0,
+                'one': 1, 'ek': 1,
+                'two': 2, 'do': 2, 'to': 2, 'too': 2,
+                'three': 3, 'teen': 3,
+                'four': 4, 'char': 4, 'for': 4,
+                'five': 5, 'panch': 5,
+                'six': 6, 'chhah': 6,
+                'seven': 7, 'saat': 7,
+                'eight': 8, 'aath': 8,
+                'nine': 9, 'nau': 9,
+                'ten': 10, 'das': 10,
+                'twenty': 20, 'bees': 20,
+                'thirty': 30, 'tees': 30,
+                'forty': 40, 'chalees': 40,
+                'fifty': 50, 'pachaas': 50,
+                'sixty': 60, 'saath': 60,
+                'seventy': 70, 'sattar': 70,
+                'eighty': 80, 'assi': 80,
+                'ninety': 90, 'nabbe': 90,
+                'hundred': 100, 'sau': 100,
+            };
+
+            for (const word in wordMap) {
+                if (cleanedText.includes(word)) {
+                    return wordMap[word];
+                }
+            }
+
+            return NaN;
         }
         
         function parseSpokenDate(text) {
@@ -379,229 +416,466 @@
             return null;
         }
 
-        
-        function processVoiceCommand(transcript) {
-            const lowerText = transcript.toLowerCase();
-
-            switch (conversationState) {
-                case 'IDLE':
-                    if (lowerText.includes('नया ऑर्डर') || lowerText.includes('new order')) {
-                        startNewOrderFlow();
-                    } else if (lowerText.includes('ऑर्डर खोजो') || lowerText.includes('search order')) {
-                        speak("ऑर्डर खोजने की सुविधा अभी उपलब्ध नहीं है।");
-                    } else {
-                        speak("समझ में नहीं आया। कृपया 'नया ऑर्डर' या 'ऑर्डर खोजो' बोलें।");
-                    }
-                    break;
-
-                case 'AWAIT_CUSTOMER_NAME':
-                    document.getElementById('customer-name').value = transcript;
-                    conversationState = 'AWAIT_MOBILE';
-                    speak("मोबाइल नंबर बताएं।", () => recognition.start());
-                    highlightField('customer-mobile');
-                    break;
-                
-                case 'AWAIT_MOBILE':
-                    const mobile = transcript.replace(/\s/g, '');
-                    if (/^\d{10}$/.test(mobile)) {
-                        document.getElementById('customer-mobile').value = mobile;
-                        conversationState = 'AWAIT_ORDER_TYPE';
-                        speak("ऑर्डर का प्रकार बताएं: सिलाई के लिए 1 या अल्टरेशन के लिए 2 बोलें।", () => recognition.start());
-                        highlightField('order-type');
-                    } else {
-                        speak("मोबाइल नंबर सही नहीं है। कृपया 10 अंकों का नंबर फिर से बोलें।", () => recognition.start());
-                    }
-                    break;
-
-                case 'AWAIT_ORDER_TYPE':
-                    const isStitching = ['stitching', 'silai', 'सिलाई', 'stitch', 'st', '1', 'one', 'एक'].some(keyword => lowerText.includes(keyword));
-                    const isAlteration = ['alterations', 'alteration', 'alter', 'अल्टरेशन', 'at', '2', 'two', 'to', 'too', 'do', 'दो'].some(keyword => lowerText.includes(keyword));
-
-                    if (isStitching) {
-                        document.getElementById('order-type').value = 'stitching';
-                        conversationState = 'AWAIT_ITEM_COUNT';
-                        speak("कितने आइटम जोड़ने हैं?", () => recognition.start());
-                        highlightField(null);
-                    } else if (isAlteration) {
-                        document.getElementById('order-type').value = 'alteration';
-                        conversationState = 'AWAIT_ITEM_COUNT';
-                        speak("कितने आइटम जोड़ने हैं?", () => recognition.start());
-                        highlightField(null);
-                    } else {
-                        speak("समझ में नहीं आया। सिलाई के लिए 1 या अल्टरेशन के लिए 2 बोलें।", () => recognition.start());
-                    }
-                    break;
-                
-                case 'AWAIT_ITEM_COUNT':
-                    const itemCount = parseSpokenNumber(transcript);
-                    if (itemCount && itemCount > 0 && itemCount <= 10) {
-                        totalItemsToAdd = itemCount;
-                        currentItemIndex = 0;
-                        document.getElementById('items-container').innerHTML = '';
-                        for (let i = 0; i < totalItemsToAdd; i++) {
-                            addItemRow(i);
-                        }
-                        conversationState = 'AWAIT_ITEM_NAME';
-                        speak(`ठीक है, ${totalItemsToAdd} आइटम। पहले आइटम का नाम बताएं।`, () => recognition.start());
-                        highlightField(`item-name-0`);
-                    } else {
-                        speak("कृपया 1 और 10 के बीच एक संख्या बताएं।", () => recognition.start());
-                    }
-                    break;
-
-                case 'AWAIT_ITEM_NAME':
-                    document.getElementById(`item-name-${currentItemIndex}`).value = transcript;
-                    conversationState = 'AWAIT_ITEM_CHARGES';
-                    speak("इसके चार्ज कितने हैं?", () => recognition.start());
-                    highlightField(`item-charges-${currentItemIndex}`);
-                    break;
-
-                case 'AWAIT_ITEM_CHARGES':
-                    const charges = transcript.match(/\d+/);
-                    if (charges) {
-                        document.getElementById(`item-charges-${currentItemIndex}`).value = charges[0];
-                        updateTotalCharges();
-                        currentItemIndex++;
-                        if (currentItemIndex < totalItemsToAdd) {
-                            conversationState = 'AWAIT_ITEM_NAME';
-                            speak(`अगले आइटम का नाम बताएं।`, () => recognition.start());
-                            highlightField(`item-name-${currentItemIndex}`);
-                        } else {
-                            conversationState = 'AWAIT_PICKUP_DATE';
-                            speak("सभी आइटम जोड़ दिए गए हैं। पिकअप की तारीख बताएं। आप 'आज', 'कल', या '02102025' भी कह सकते हैं।", () => recognition.start());
-                            highlightField('pickup-date');
-                        }
-                    } else {
-                        speak("चार्ज समझ में नहीं आए। कृपया राशि फिर से बोलें।", () => recognition.start());
-                    }
-                    break;
-                
-                case 'AWAIT_PICKUP_DATE':
-                    const date = parseSpokenDate(transcript);
-                    if (date) {
-                        const dateString = date.toISOString().split('T')[0];
-                        document.getElementById('pickup-date').value = dateString;
-                        conversationState = 'AWAIT_SAVE_CONFIRMATION';
-                        speak("ऑर्डर सेव करने के लिए 1 या हाँ बोलें, रद्द करने के लिए 2 या ना बोलें।", () => recognition.start());
-                        highlightField(null);
-                    } else {
-                        speak("तारीख समझ में नहीं आई। कृपया फिर से बोलें, जैसे 'आज', 'कल', या '02102025' ।", () => recognition.start());
-                    }
-                    break;
-                
-                case 'AWAIT_SAVE_CONFIRMATION':
-                    const confirmResponses = ['1', 'one', 'yes', 'haan', 'confirm', 'हाँ', 'एक'];
-                    const cancelResponses = ['2', 'two', 'to', 'too', 'do', 'no', 'nahi', 'cancel', 'नहीं', 'दो'];
-                    
-                    if (confirmResponses.some(res => lowerText.includes(res))) {
-                        orderForm.dispatchEvent(new Event('submit'));
-                    } else if (cancelResponses.some(res => lowerText.includes(res))) {
-                         speak("ऑर्डर रद्द कर दिया गया है।", () => {
-                            hideForm();
-                            resetForm();
-                        });
-                    } else {
-                        speak("समझ में नहीं आया। सेव करने के लिए 1 या हाँ, रद्द करने के लिए 2 या ना बोलें।", () => recognition.start());
-                    }
-                    break;
-            }
-        }
-
         function startNewOrderFlow() {
             resetForm();
             showForm();
             document.getElementById('order-number').value = getNextOrderNumber();
+            document.getElementById('form-title').textContent = "New Order";
             conversationState = 'AWAIT_CUSTOMER_NAME';
-            speak("नया ऑर्डर शुरू कर रहा हूँ। ग्राहक का नाम बताएं।", () => {
-                if (recognition) recognition.start();
-            });
+            speak("New order. Please state the customer's name.", () => recognition.start());
             highlightField('customer-name');
         }
-        
-        function addItemRow(index) {
+
+        function addItemRow() {
             const container = document.getElementById('items-container');
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'item-row grid grid-cols-1 md:grid-cols-3 gap-2 items-center';
-            itemDiv.innerHTML = `
-                <div class="md:col-span-2">
-                    <label class="sr-only" for="item-name-${index}">Item Name</label>
-                    <input type="text" id="item-name-${index}" placeholder="Item ${index + 1} Name" class="form-input">
+            const index = itemCounter++;
+            const newItem = document.createElement('div');
+            newItem.className = 'item-row grid grid-cols-12 gap-2 items-center';
+            newItem.innerHTML = `
+                <div class="col-span-6">
+                    <input type="text" id="item-name-${index}" placeholder="Item Name / Description" class="form-input">
                 </div>
-                <div>
-                    <label class="sr-only" for="item-charges-${index}">Charges</label>
-                    <input type="number" id="item-charges-${index}" placeholder="Charges" class="form-input" min="0" oninput="updateTotalCharges()">
-                </div>`;
-            container.appendChild(itemDiv);
+                <div class="col-span-4">
+                    <input type="number" id="item-charges-${index}" placeholder="Charges" class="form-input item-charge-input" step="0.01" min="0">
+                </div>
+                <div class="col-span-2 text-right">
+                    <button type="button" class="text-red-500 hover:text-red-700 remove-item-btn">&times; Remove</button>
+                </div>
+            `;
+            container.appendChild(newItem);
+            newItem.querySelector('.remove-item-btn').addEventListener('click', () => {
+                newItem.remove();
+                updateTotalCharges();
+            });
+            newItem.querySelector('.item-charge-input').addEventListener('input', updateTotalCharges);
         }
 
         function updateTotalCharges() {
             let total = 0;
-            document.querySelectorAll('[id^="item-charges-"]').forEach(input => {
+            document.querySelectorAll('.item-charge-input').forEach(input => {
                 total += parseFloat(input.value) || 0;
             });
             document.getElementById('total-charges').textContent = `₹${total.toFixed(2)}`;
         }
 
-        // --- Event Listeners & Init ---
+        function searchOrders(query) {
+            const lowerQuery = query.toLowerCase();
+            return allOrders.filter(o =>
+                (o.orderNumber && o.orderNumber.toLowerCase().includes(lowerQuery)) ||
+                (o.customerName && o.customerName.toLowerCase().includes(lowerQuery)) ||
+                (o.customerMobile && o.customerMobile.includes(lowerQuery))
+            ).slice(0, 5); // Limit to 5 results for clarity
+        }
+
+        function renderSearchResults(results) {
+            lastSearchResults = results;
+            if (results.length === 0) {
+                searchResultsContainer.innerHTML = '<p class="text-center text-gray-500">No orders found.</p>';
+                return;
+            }
+            searchResultsContainer.innerHTML = results.map((order, index) => {
+                const totalCharges = order.type === 'stitching' ? (order.items || []).reduce((s, i) => s + (i.charges || 0), 0) : (order.charges || 0);
+                const balance = totalCharges - (order.receivedPayment || 0);
+                return `
+                    <div class="search-result-card bg-white p-4 border rounded-lg" onclick="loadOrderIntoForm(${order.id})">
+                        <div class="flex justify-between items-center">
+                            <p class="font-bold text-indigo-700">${order.orderNumber}</p>
+                            <p class="text-sm font-semibold">${order.customerName}</p>
+                            <p class="text-sm ${balance > 0 ? 'text-red-600' : 'text-green-600'}">Balance: ₹${balance.toFixed(2)}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function loadOrderIntoForm(orderId) {
+            const order = allOrders.find(o => o.id === orderId);
+            if (!order) {
+                showToast('Order not found.');
+                return;
+            }
+            resetForm();
+            showForm();
+            searchResultsContainer.innerHTML = ''; // Clear search results
+
+            document.getElementById('editing-order-id').value = order.id;
+            document.getElementById('form-title').textContent = `Editing Order #${order.orderNumber}`;
+            document.getElementById('order-number').value = order.orderNumber;
+            document.getElementById('customer-name').value = order.customerName;
+            document.getElementById('customer-mobile').value = order.customerMobile;
+            document.getElementById('order-type').value = order.type;
+            
+            const itemsContainer = document.getElementById('items-container');
+            if (order.type === 'stitching') {
+                document.getElementById('pickup-date').value = order.items?.[0]?.pickupDate || '';
+                order.items.forEach(item => {
+                    addItemRow();
+                    document.getElementById(`item-name-${itemCounter-1}`).value = item.item;
+                    document.getElementById(`item-charges-${itemCounter-1}`).value = item.charges;
+                });
+            } else { // alteration
+                document.getElementById('pickup-date').value = order.pickupDate || '';
+                addItemRow();
+                document.getElementById(`item-name-${itemCounter-1}`).value = order.description;
+                document.getElementById(`item-charges-${itemCounter-1}`).value = order.charges;
+            }
+            updateTotalCharges();
+
+            conversationState = 'ORDER_LOADED';
+            const { receivedPayment = 0 } = order;
+            const total = parseFloat(document.getElementById('total-charges').textContent.replace('₹', ''));
+            const balance = total - receivedPayment;
+
+            speak(`Loaded order for ${order.customerName}. Balance is ${balance.toFixed(0)} rupees. You can say 'edit customer name', 'receive payment', or 'clear form'.`);
+        }
+        
+        // ... (existing processVoiceCommand function to be replaced) ...
+        async function processVoiceCommand(transcript) {
+            const lowerText = transcript.toLowerCase();
+
+            // Universal commands
+            if (lowerText.includes('clear') || lowerText.includes('cancel')) {
+                speak("Okay, form cleared.");
+                hideForm();
+                return;
+            }
+
+            switch (conversationState) {
+                case 'IDLE':
+                    if (lowerText.includes('new order')) {
+                        startNewOrderFlow();
+                    } else if (lowerText.startsWith('search for') || lowerText.startsWith('find order')) {
+                        const query = lowerText.replace('search for', '').replace('find order', '').trim();
+                        if (query) {
+                            const results = searchOrders(query);
+                            renderSearchResults(results);
+                            if (results.length > 0) {
+                                speak(`Found ${results.length} order${results.length > 1 ? 's' : ''}.`);
+                            } else {
+                                speak("Sorry, I couldn't find any matching orders.");
+                            }
+                        } else {
+                            conversationState = 'AWAIT_SEARCH_QUERY';
+                            speak("What would you like to search for?");
+                        }
+                    } else {
+                        speak("I didn't understand. Say 'New Order' or 'Search for...'");
+                    }
+                    break;
+
+                case 'AWAIT_SEARCH_QUERY':
+                    const results = searchOrders(lowerText);
+                    renderSearchResults(results);
+                    if (results.length > 0) {
+                        speak(`Found ${results.length} order${results.length > 1 ? 's' : ''}.`);
+                    } else {
+                        speak("Sorry, I couldn't find any matching orders.");
+                    }
+                    conversationState = 'IDLE';
+                    break;
+                
+                case 'ORDER_LOADED':
+                    if (lowerText.startsWith('edit customer name to')) {
+                        const newName = transcript.substring('edit customer name to'.length).trim();
+                        document.getElementById('customer-name').value = newName;
+                        speak(`Customer name changed to ${newName}.`);
+                    } else if (lowerText.startsWith('change mobile number to')) {
+                        const newMobile = transcript.substring('change mobile number to'.length).replace(/\s/g, '');
+                        if (/^\d{10}$/.test(newMobile)) {
+                            document.getElementById('customer-mobile').value = newMobile;
+                            speak(`Mobile number changed.`);
+                        } else {
+                            speak("That doesn't seem like a valid 10-digit number.");
+                        }
+                    } else if (lowerText.startsWith('update pickup date to')) {
+                        const dateText = lowerText.substring('update pickup date to'.length).trim();
+                        const newDate = parseSpokenDate(dateText);
+                        if (newDate) {
+                            document.getElementById('pickup-date').valueAsDate = newDate;
+                            speak(`Pickup date updated.`);
+                        } else {
+                            speak("I didn't understand that date.");
+                        }
+                    } else if (lowerText.startsWith('receive payment')) {
+                        const amountText = lowerText.replace('receive payment of', '').trim();
+                        const amount = parseSpokenNumber(amountText);
+                        if (!isNaN(amount)) {
+                            stateContext.paymentAmount = amount;
+                            conversationState = 'AWAIT_PAYMENT_CONFIRMATION';
+                            speak(`Receive payment of ${amount} rupees. Is that correct? Say 'yes' or 'no'.`, () => recognition.start());
+                        } else {
+                            conversationState = 'AWAIT_PAYMENT_AMOUNT';
+                            speak("How much was received?", () => recognition.start());
+                        }
+                    }
+                    else if(lowerText.includes('save')) {
+                        conversationState = 'AWAIT_SAVE_CONFIRMATION';
+                        speak("Should I save the changes? Please say 'yes' or 'no'.", () => recognition.start());
+                    } else {
+                        speak("You can say 'edit customer name', 'receive payment', or 'save'.");
+                    }
+                    break;
+                
+                case 'AWAIT_PAYMENT_AMOUNT':
+                    const amount = parseSpokenNumber(lowerText);
+                     if (!isNaN(amount)) {
+                        stateContext.paymentAmount = amount;
+                        conversationState = 'AWAIT_PAYMENT_CONFIRMATION';
+                        speak(`Receive payment of ${amount} rupees. Is that correct? Say 'yes' or 'no'.`, () => recognition.start());
+                    } else {
+                        speak("Sorry, I didn't get the amount. Please repeat.", () => recognition.start());
+                    }
+                    break;
+
+                case 'AWAIT_PAYMENT_CONFIRMATION':
+                    if (lowerText.includes('yes')) {
+                        const orderId = document.getElementById('editing-order-id').value;
+                        const order = allOrders.find(o => o.id == orderId);
+                        if (order && stateContext.paymentAmount) {
+                            const newPayment = { id: Date.now(), amount: stateContext.paymentAmount, date: new Date().toISOString(), mode: 'Voice' };
+                            const updatedPayments = [...(order.payments || []), newPayment];
+                            const newReceivedPayment = updatedPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+                            
+                            const updates = {
+                                payments: updatedPayments,
+                                receivedPayment: newReceivedPayment,
+                                lastUpdated: new Date().toISOString()
+                            };
+
+                            try {
+                                await db.ref('orders/' + order.id).update(updates);
+                                speak("Payment saved successfully.");
+                                showToast("Payment saved.");
+                                loadOrderIntoForm(order.id); // Reload to show updated balance
+                            } catch (error) {
+                                speak("Sorry, there was an error saving the payment.");
+                            }
+                        }
+                        conversationState = 'ORDER_LOADED';
+                    } else {
+                        speak("Payment cancelled.");
+                        conversationState = 'ORDER_LOADED';
+                    }
+                    break;
+
+                // --- NEW ORDER FLOW (existing logic) ---
+                case 'AWAIT_CUSTOMER_NAME':
+                    document.getElementById('customer-name').value = transcript;
+                    conversationState = 'AWAIT_MOBILE';
+                    speak("Please state the 10-digit mobile number.", () => recognition.start());
+                    highlightField('customer-mobile');
+                    break;
+                case 'AWAIT_MOBILE':
+                    const mobile = transcript.replace(/\s/g, '');
+                    if (/^\d{10}$/.test(mobile)) {
+                        document.getElementById('customer-mobile').value = mobile;
+                        conversationState = 'AWAIT_ORDER_TYPE';
+                        speak("What is the order type? Say 'stitching' or 'alteration'.", () => recognition.start());
+                        highlightField('order-type');
+                    } else {
+                        speak("The mobile number is incorrect. Please say the 10-digit number again.", () => recognition.start());
+                    }
+                    break;
+                case 'AWAIT_ORDER_TYPE':
+                    // ... (same as before) ...
+                    const isStitching = ['stitching', 'silai', 'सिलाई', 'stitch', 'st', '1', 'one', 'एक'].some(keyword => lowerText.includes(keyword));
+                    const isAlteration = ['alteration', 'alter', 'अल्टरेशन', 'at', '2', 'two', 'दो', 'do', 'to', 'too'].some(keyword => lowerText.includes(keyword));
+
+                    if (isStitching) {
+                        document.getElementById('order-type').value = 'stitching';
+                        conversationState = 'AWAIT_ITEM_COUNT';
+                        speak("How many suits are there?", () => recognition.start());
+                        highlightField(null); // No specific field to highlight
+                    } else if (isAlteration) {
+                        document.getElementById('order-type').value = 'alteration';
+                        conversationState = 'AWAIT_ITEM_COUNT';
+                        speak("How many items are there?", () => recognition.start());
+                        highlightField(null);
+                    } else {
+                        speak("I didn't understand. Please say 'stitching' or 'alteration'.", () => recognition.start());
+                    }
+                    break;
+                case 'AWAIT_ITEM_COUNT':
+                     const itemCount = parseSpokenNumber(lowerText);
+                    if (itemCount > 0 && itemCount <= 10) {
+                        totalItemsToAdd = itemCount;
+                        currentItemIndex = 0;
+                        document.getElementById('items-container').innerHTML = ''; // Clear previous items
+                        for (let i = 0; i < totalItemsToAdd; i++) {
+                            addItemRow();
+                        }
+                        conversationState = 'AWAIT_ITEM_NAME';
+                        const itemNamePrompt = totalItemsToAdd > 1 ? "Please state the name of the first item." : "Please state the item's description.";
+                        speak(itemNamePrompt, () => recognition.start());
+                        highlightField(`item-name-${currentItemIndex}`);
+                    } else {
+                        speak("Please state a number between 1 and 10.", () => recognition.start());
+                    }
+                    break;
+                case 'AWAIT_ITEM_NAME':
+                    document.getElementById(`item-name-${currentItemIndex}`).value = transcript;
+                    conversationState = 'AWAIT_ITEM_CHARGES';
+                    speak("What are the charges for this item?", () => recognition.start());
+                    highlightField(`item-charges-${currentItemIndex}`);
+                    break;
+                case 'AWAIT_ITEM_CHARGES':
+                    const charges = parseSpokenNumber(lowerText);
+                    if (!isNaN(charges)) {
+                        document.getElementById(`item-charges-${currentItemIndex}`).value = charges;
+                        updateTotalCharges();
+                        currentItemIndex++;
+
+                        if (currentItemIndex < totalItemsToAdd) {
+                            conversationState = 'AWAIT_ITEM_NAME';
+                            speak(`Please state the name for item ${currentItemIndex + 1}.`, () => recognition.start());
+                            highlightField(`item-name-${currentItemIndex}`);
+                        } else {
+                            conversationState = 'AWAIT_PICKUP_DATE';
+                            speak("What is the pickup date?", () => recognition.start());
+                            highlightField('pickup-date');
+                        }
+                    } else {
+                        speak("I didn't understand the charges. Please say the amount again.", () => recognition.start());
+                    }
+                    break;
+                case 'AWAIT_PICKUP_DATE':
+                    const parsedDate = parseSpokenDate(transcript);
+                    if (parsedDate) {
+                        document.getElementById('pickup-date').valueAsDate = parsedDate;
+                        conversationState = 'AWAIT_SAVE_CONFIRMATION';
+                        speak("Should I save this order? Please say 'yes' or 'no'.", () => recognition.start());
+                        highlightField(null);
+                    } else {
+                        speak("I didn't understand the date. Please say 'today', 'tomorrow', or the date.", () => recognition.start());
+                    }
+                    break;
+                case 'AWAIT_SAVE_CONFIRMATION':
+                    if (lowerText.includes('yes') || lowerText.includes('save') || lowerText.includes('हाँ') || lowerText.includes('han')) {
+                        orderForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                    } else if (lowerText.includes('no') || lowerText.includes('cancel') || lowerText.includes('ना')) {
+                        speak("Okay, the order has been cancelled.");
+                        hideForm();
+                    } else {
+                        speak("I didn't understand. Please say 'yes' or 'no'.", () => recognition.start());
+                    }
+                    break;
+            }
+        }
+        
+        // ... (existing form submit logic is fine, it already handles new vs edit) ...
+        orderForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!db) {
+                showToast("Database not connected. Cannot save order.", 4000);
+                return;
+            }
+
+            const editingOrderId = document.getElementById('editing-order-id').value;
+            const customerName = document.getElementById('customer-name').value.trim();
+            const customerMobile = document.getElementById('customer-mobile').value.trim();
+            const orderType = document.getElementById('order-type').value;
+            const pickupDate = document.getElementById('pickup-date').value;
+
+            if (!customerName || !customerMobile) {
+                const msg = "Customer name and mobile are required.";
+                speak(msg);
+                showToast(msg);
+                return;
+            }
+
+            const itemRows = document.querySelectorAll('#items-container .item-row');
+            if (itemRows.length === 0) {
+                const msg = "Please add at least one item.";
+                speak(msg);
+                showToast(msg);
+                return;
+            }
+
+            const newId = editingOrderId ? parseInt(editingOrderId) : Date.now();
+            const existingOrder = editingOrderId ? allOrders.find(o => o.id == editingOrderId) : null;
+
+            const orderData = {
+                id: newId,
+                orderNumber: document.getElementById('order-number').value,
+                customerName,
+                customerMobile,
+                type: orderType,
+                bookingDate: existingOrder?.bookingDate || new Date().toISOString(),
+                lastUpdated: new Date().toISOString(),
+                paymentReceived: existingOrder?.paymentReceived || false,
+                pipelineStatus: existingOrder?.pipelineStatus || 'new',
+                payments: existingOrder?.payments || [],
+                receivedPayment: existingOrder?.receivedPayment || 0
+            };
+
+            if (orderType === 'stitching') {
+                orderData.items = Array.from(itemRows).map((row, i) => ({
+                    item: row.querySelector(`input[id^="item-name-"]`).value.trim(),
+                    charges: parseFloat(row.querySelector(`input[id^="item-charges-"]`).value) || 0,
+                    pickupDate: pickupDate
+                })).filter(item => item.item);
+                
+                if (orderData.items.length === 0) {
+                    showToast("Please provide item names for stitching order.");
+                    return;
+                }
+            } else { // alteration
+                const description = Array.from(itemRows).map(row => row.querySelector(`input[id^="item-name-"]`).value.trim()).filter(Boolean);
+                const totalCharges = Array.from(itemRows).reduce((sum, row) => sum + (parseFloat(row.querySelector(`input[id^="item-charges-"]`).value) || 0), 0);
+                
+                if (description.length === 0) {
+                    showToast("Please provide alteration details.");
+                    return;
+                }
+                orderData.description = description.join(', ');
+                orderData.charges = totalCharges;
+                orderData.pickupDate = pickupDate;
+            }
+            
+            const totalChargesValue = orderData.charges ?? (orderData.items ? orderData.items.reduce((s,i)=>s + (i.charges || 0), 0) : 0);
+            orderData.paymentReceived = (orderData.receivedPayment || 0) >= totalChargesValue;
+
+            try {
+                await db.ref('orders/' + newId).set(orderData);
+                
+                const successMessage = editingOrderId ? "Order updated successfully." : "Order saved successfully.";
+                speak(successMessage);
+                showToast(editingOrderId ? "Order updated." : "Order saved.");
+                hideForm();
+                resetForm();
+            } catch (error) {
+                console.error("Error saving order:", error);
+                speak("There was an error saving the order.");
+                showToast("Error saving order. See console for details.", 5000);
+            }
+        });
+        
         document.addEventListener('DOMContentLoaded', () => {
             initializeFirebase();
             setupVoiceRecognition();
-
-            manualSearchBtn.addEventListener('click', () => {
-                showToast("Manual search is not fully implemented yet.");
-            });
-
-            document.getElementById('add-item-btn').addEventListener('click', () => {
-                 const itemIndex = document.querySelectorAll('.item-row').length;
-                 addItemRow(itemIndex);
-            });
             
-            document.getElementById('clear-form-btn').addEventListener('click', () => {
+            clearFormBtn.addEventListener('click', () => {
+                showToast('Form cleared.');
                 hideForm();
-                resetForm();
             });
+            addItemBtn.addEventListener('click', addItemRow);
 
-            orderForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const newOrder = {
-                    id: Date.now(),
-                    orderNumber: document.getElementById('order-number').value,
-                    customerName: document.getElementById('customer-name').value,
-                    customerMobile: document.getElementById('customer-mobile').value,
-                    type: document.getElementById('order-type').value,
-                    bookingDate: new Date().toISOString(),
-                    pickupDate: document.getElementById('pickup-date').value,
-                    status: 'Pending',
-                    items: [],
-                    payments: [],
-                    receivedPayment: 0
-                };
-
-                document.querySelectorAll('.item-row').forEach((row, index) => {
-                    newOrder.items.push({
-                        item: row.querySelector(`#item-name-${index}`).value,
-                        charges: parseFloat(row.querySelector(`#item-charges-${index}`).value) || 0
-                    });
-                });
-                
-                if(db) {
-                    db.ref('orders/' + newOrder.id).set(newOrder)
-                    .then(() => {
-                        speak(`ऑर्डर नंबर ${newOrder.orderNumber} सफलतापूर्वक सेव हो गया है।`);
-                        showToast("Order saved successfully!");
-                        hideForm();
-                        resetForm();
-                    })
-                    .catch(err => {
-                        speak("ऑर्डर सेव करने में त्रुटि हुई।");
-                        showToast("Error saving order: " + err.message, 5000);
-                    });
-                } else {
-                    speak("डेटाबेस से कनेक्शन नहीं है। ऑर्डर सेव नहीं किया जा सका।");
-                    showToast("Not connected to database. Order not saved.", 5000);
-                }
+            let searchDebounce;
+            globalSearchInput.addEventListener('input', () => {
+                clearTimeout(searchDebounce);
+                searchDebounce = setTimeout(() => {
+                    const query = globalSearchInput.value.trim();
+                    if(query) {
+                        renderSearchResults(searchOrders(query));
+                    } else {
+                        searchResultsContainer.innerHTML = '';
+                    }
+                }, 300);
             });
         });
+
+        // Make functions globally accessible for onclick handlers
+        window.loadOrderIntoForm = loadOrderIntoForm;
     </script>
 
 <script src="./script.js"></script></body></html>
